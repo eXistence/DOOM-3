@@ -1056,6 +1056,7 @@ add_dependencies(${TARGET_NAME} fhGame-x86 fhGame-roe-x86)
 
 if(Qt5Widgets_FOUND)
   add_dependencies(${TARGET_NAME} Qt5CopyBinaries)
+  set_property(TARGET ${TARGET_NAME} PROPERTY AUTOMOC OFF)
 endif()
 
 if(MSVC)
