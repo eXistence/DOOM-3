@@ -2,7 +2,7 @@
 ===========================================================================
 
 Doom 3 GPL Source Code
-Copyright (C) 2016 Johannes Ohlemacher (http://github.com/eXistence/fhDOOM)
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
 This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).
 
@@ -25,8 +25,4 @@ If you have questions concerning this license or the applicable additional terms
 
 ===========================================================================
 */
-
 #pragma once
-
-void QtLightEditorInit( const idDict* spawnArgs );
-void QtCameraViewInit();

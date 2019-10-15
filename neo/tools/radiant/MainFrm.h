@@ -153,7 +153,6 @@ protected:  // control bar embedded members
 	CString m_strStatus[15];
 	CXYWnd* m_pActiveXY;
 	bool m_bCamPreview;
-	bool busy;
 	bool nurbMode;
 	idCurve_NURBS<idVec2> nurb;
 	// Generated message map functions
@@ -161,15 +160,11 @@ protected:
 	bool m_bDoLoop;
 	void CreateQEChildren();
 	void LoadCommandMap();
-	void SaveCommandMap();
 	void ShowMenuItemKeyBindings(CMenu *pMenu);
 	void SetEntityCheck();
 	void SetGridChecks(int nID);
 public:
 	void Nudge(int nDim, float fNudge);
-	void SetBusy(bool b) {
-		busy = b;
-	}
 
 	// these are public so i can easily reflect messages
 	// from child windows..

@@ -416,37 +416,37 @@ static void printTimingsStats(const fhDmapTimingStats& stats, const char* name) 
 Dmap_f
 ============
 */
-void Dmap_f( const idCmdArgs &args ) {
+void Dmap_f(const idCmdArgs &args) {
 
-  dmapGlobals.timingMakeStructural.Reset();
-  dmapGlobals.timingMakeTreePortals.Reset();
-  dmapGlobals.timingFilterBrushesIntoTree.Reset();
-  dmapGlobals.timingFloodAndFill.Reset();
-  dmapGlobals.timingClipSidesByTree.Reset();
-  dmapGlobals.timingFloodAreas.Reset();
-  dmapGlobals.timingPutPrimitivesInAreas.Reset();
-  dmapGlobals.timingPreLight.Reset();
-  dmapGlobals.timingOptimize.Reset();
-  dmapGlobals.timingFixTJunctions.Reset();
+	dmapGlobals.timingMakeStructural.Reset();
+	dmapGlobals.timingMakeTreePortals.Reset();
+	dmapGlobals.timingFilterBrushesIntoTree.Reset();
+	dmapGlobals.timingFloodAndFill.Reset();
+	dmapGlobals.timingClipSidesByTree.Reset();
+	dmapGlobals.timingFloodAreas.Reset();
+	dmapGlobals.timingPutPrimitivesInAreas.Reset();
+	dmapGlobals.timingPreLight.Reset();
+	dmapGlobals.timingOptimize.Reset();
+	dmapGlobals.timingFixTJunctions.Reset();
 
-	common->ClearWarnings( "running dmap" );
+	common->ClearWarnings("running dmap");
 
 	// refresh the screen each time we print so it doesn't look
 	// like it is hung
-	common->SetRefreshOnPrint( true );
-	Dmap( args );
-	common->SetRefreshOnPrint( false );
+	common->SetRefreshOnPrint(true);
+	Dmap(args);
+	common->SetRefreshOnPrint(false);
 
 	common->PrintWarnings();
 
-  printTimingsStats(dmapGlobals.timingMakeStructural,        "Make Structural  ");
-  printTimingsStats(dmapGlobals.timingMakeTreePortals,       "Make Tree Portals");
-  printTimingsStats(dmapGlobals.timingFilterBrushesIntoTree, "Filter Brushes   ");
-  printTimingsStats(dmapGlobals.timingFloodAndFill,          "Flood and Fill   ");
-  printTimingsStats(dmapGlobals.timingClipSidesByTree,       "Clip Sides       ");
-  printTimingsStats(dmapGlobals.timingFloodAreas,            "Flood Areas      ");
-  printTimingsStats(dmapGlobals.timingPutPrimitivesInAreas,  "Put Primitives   ");
-  printTimingsStats(dmapGlobals.timingPreLight,              "Prelight         ");
-  printTimingsStats(dmapGlobals.timingOptimize,              "Optimize         ");
-  printTimingsStats(dmapGlobals.timingFixTJunctions,         "Fix T Junctions  ");
+	printTimingsStats(dmapGlobals.timingMakeStructural, "Make Structural  ");
+	printTimingsStats(dmapGlobals.timingMakeTreePortals, "Make Tree Portals");
+	printTimingsStats(dmapGlobals.timingFilterBrushesIntoTree, "Filter Brushes   ");
+	printTimingsStats(dmapGlobals.timingFloodAndFill, "Flood and Fill   ");
+	printTimingsStats(dmapGlobals.timingClipSidesByTree, "Clip Sides       ");
+	printTimingsStats(dmapGlobals.timingFloodAreas, "Flood Areas      ");
+	printTimingsStats(dmapGlobals.timingPutPrimitivesInAreas, "Put Primitives   ");
+	printTimingsStats(dmapGlobals.timingPreLight, "Prelight         ");
+	printTimingsStats(dmapGlobals.timingOptimize, "Optimize         ");
+	printTimingsStats(dmapGlobals.timingFixTJunctions, "Fix T Junctions  ");
 }

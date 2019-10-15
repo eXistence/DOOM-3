@@ -2609,7 +2609,7 @@ bool FindNextBrush(brush_t* pPrevFoundBrush)	// can be NULL for fresh search
 
 		if (pLastFoundEnt->origin[0] != 0.0f || pLastFoundEnt->origin[1] != 0.0f || pLastFoundEnt->origin[2] != 0.0f)
 		{
-			VectorCopy(pLastFoundEnt->origin,v3Origin);
+			v3Origin = pLastFoundEnt->origin;
 		}
 		else
 		{
@@ -2622,8 +2622,9 @@ bool FindNextBrush(brush_t* pPrevFoundBrush)	// can be NULL for fresh search
 
 		// got one, jump the camera to it...
 		//
-		VectorCopy(v3Origin, g_pParentWnd->GetCamera()->Camera().origin);
-							 g_pParentWnd->GetCamera()->Camera().origin[1] -= 32;	// back off a touch to look at it
+		g_pParentWnd->GetCamera()->Camera().origin = v3Origin;
+		g_pParentWnd->GetCamera()->Camera().origin[1] -= 32;	// back off a touch to look at it
+
 		g_pParentWnd->GetCamera()->Camera().angles[0] = 0;
 		g_pParentWnd->GetCamera()->Camera().angles[1] = 90;
 		g_pParentWnd->GetCamera()->Camera().angles[2] = 0;
@@ -2733,8 +2734,8 @@ void CMainFrame::OnMiscSetViewPos()
 			}
 
 			g_pParentWnd->GetCamera()->Camera().angles[YAW] = fYaw;
-			VectorCopy (v3Viewpos, g_pParentWnd->GetCamera()->Camera().origin);
-			VectorCopy (v3Viewpos, g_pParentWnd->GetXYWnd()->GetOrigin());
+			g_pParentWnd->GetCamera()->Camera().origin = v3Viewpos;
+			g_pParentWnd->GetXYWnd()->GetOrigin() = v3Viewpos;
 			Sys_UpdateWindows (W_ALL);
 		}
 		else
@@ -3365,11 +3366,7 @@ void CMainFrame::OnViewClipper() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraAngledown() {
-	m_pCamWnd->Camera().angles[0] -= SPEED_TURN;
-	if (m_pCamWnd->Camera().angles[0] < -85) {
-		m_pCamWnd->Camera().angles[0] = -85;
-	}
-
+	m_pCamWnd->TurnCameraUpDown(-SPEED_TURN);
 	Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
 }
 
@@ -3378,11 +3375,7 @@ void CMainFrame::OnCameraAngledown() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraAngleup() {
-	m_pCamWnd->Camera().angles[0] += SPEED_TURN;
-	if (m_pCamWnd->Camera().angles[0] > 85) {
-		m_pCamWnd->Camera().angles[0] = 85;
-	}
-
+	m_pCamWnd->TurnCameraUpDown(SPEED_TURN);
 	Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
 }
 
@@ -3391,7 +3384,7 @@ void CMainFrame::OnCameraAngleup() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraBack() {
-	VectorMA(m_pCamWnd->Camera().origin, -SPEED_MOVE, m_pCamWnd->Camera().forward, m_pCamWnd->Camera().origin);
+	m_pCamWnd->MoveCameraForwardBackward(-SPEED_MOVE);	
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3399,8 +3392,8 @@ void CMainFrame::OnCameraBack() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMainFrame::OnCameraDown() {
-	m_pCamWnd->Camera().origin[2] -= SPEED_MOVE;
+void CMainFrame::OnCameraDown() {	
+	m_pCamWnd->MoveCameraUpDown(-SPEED_MOVE);	
 	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 }
 
@@ -3409,7 +3402,7 @@ void CMainFrame::OnCameraDown() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraForward() {
-	VectorMA(m_pCamWnd->Camera().origin, SPEED_MOVE, m_pCamWnd->Camera().forward, m_pCamWnd->Camera().origin);
+	m_pCamWnd->MoveCameraForwardBackward(SPEED_MOVE);	
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3418,8 +3411,8 @@ void CMainFrame::OnCameraForward() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraLeft() {
-	m_pCamWnd->Camera().angles[1] += SPEED_TURN;
-  Sys_UpdateWindows(W_CAMERA | W_XY);
+	m_pCamWnd->TurnCameraLeftRight(SPEED_TURN);	
+	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 /*
@@ -3427,7 +3420,7 @@ void CMainFrame::OnCameraLeft() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraRight() {
-	m_pCamWnd->Camera().angles[1] -= SPEED_TURN;
+	m_pCamWnd->TurnCameraLeftRight(-SPEED_TURN);	
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3436,7 +3429,7 @@ void CMainFrame::OnCameraRight() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraStrafeleft() {
-	VectorMA(m_pCamWnd->Camera().origin, -SPEED_MOVE, m_pCamWnd->Camera().right, m_pCamWnd->Camera().origin);
+	m_pCamWnd->MoveCameraLeftRight(-SPEED_MOVE);	
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3445,7 +3438,7 @@ void CMainFrame::OnCameraStrafeleft() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraStraferight() {
-	VectorMA(m_pCamWnd->Camera().origin, SPEED_MOVE, m_pCamWnd->Camera().right, m_pCamWnd->Camera().origin);
+	m_pCamWnd->MoveCameraLeftRight(SPEED_MOVE);	
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3454,7 +3447,7 @@ void CMainFrame::OnCameraStraferight() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraUp() {
-	m_pCamWnd->Camera().origin[2] += SPEED_MOVE;
+	m_pCamWnd->MoveCameraUpDown(SPEED_MOVE);
 	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 }
 

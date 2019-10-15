@@ -812,6 +812,8 @@ IF(WIN32)
 
       tools/radiant/autocaulk.cpp
       tools/radiant/autocaulk.h
+      tools/radiant/CameraDrawable.cpp
+      tools/radiant/CameraDrawable.h      
       tools/radiant/CameraTargetDlg.cpp
       tools/radiant/CameraTargetDlg.h
       tools/radiant/CamWnd.cpp

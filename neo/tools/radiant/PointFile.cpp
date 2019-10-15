@@ -57,10 +57,10 @@ void Pointfile_Next (void)
 		return;
 	}
 	s_check_point++;
-  g_pParentWnd->GetCamera()->Camera().origin = s_pointvecs[s_check_point];
-  g_pParentWnd->GetXYWnd()->GetOrigin() = s_pointvecs[s_check_point];
+	g_pParentWnd->GetCamera()->Camera().origin = s_pointvecs[s_check_point];
+	g_pParentWnd->GetXYWnd()->GetOrigin() = s_pointvecs[s_check_point];
 
-  idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;
+	idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;
 	dir.Normalize();
 
 	g_pParentWnd->GetCamera()->Camera().angles[1] = atan2 (dir[1], dir[0])*180/3.14159;

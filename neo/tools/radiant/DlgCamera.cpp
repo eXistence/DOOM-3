@@ -310,7 +310,10 @@ void CDlgCamera::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		g_splineList->buildCamera();
 		idVec3 dir;
 		float fov;
-		g_splineList->getCameraInfo(p, g_pParentWnd->GetCamera()->Camera().origin, dir, &fov);
+		idVec3 origin;
+		g_splineList->getCameraInfo(p, origin, dir, &fov);
+
+		g_pParentWnd->GetCamera()->SetOrigin(origin);
 		g_pParentWnd->GetCamera()->Camera().angles[1] = atan2 (dir[1], dir[0])*180/3.14159;
 		g_pParentWnd->GetCamera()->Camera().angles[0] = asin (dir[2])*180/3.14159;
 

@@ -784,20 +784,20 @@ void Texture_SetMode(int iMenu) {
 
 
 	if (!texturing && iMenu == ID_TEXTURES_WIREFRAME) {
-		g_pParentWnd->GetCamera()->Camera().draw_mode = cd_wire;
+		g_pParentWnd->GetCamera()->SetDrawMode(CameraDrawMode::Wireframe);
 		Map_BuildBrushData();
 		Sys_UpdateWindows(W_ALL);
 		return;
 	}
 	else if (!texturing && iMenu == ID_TEXTURES_FLATSHADE) {
-		g_pParentWnd->GetCamera()->Camera().draw_mode = cd_solid;
+		g_pParentWnd->GetCamera()->SetDrawMode(CameraDrawMode::Solid);
 		Map_BuildBrushData();
 		Sys_UpdateWindows(W_ALL);
 		return;
 	}
 
-	if (g_pParentWnd->GetCamera()->Camera().draw_mode != cd_texture) {
-		g_pParentWnd->GetCamera()->Camera().draw_mode = cd_texture;
+	if (g_pParentWnd->GetCamera()->GetDrawMode() != CameraDrawMode::Textures) {
+		g_pParentWnd->GetCamera()->SetDrawMode(CameraDrawMode::Textures);		
 		Map_BuildBrushData();
 	}
 

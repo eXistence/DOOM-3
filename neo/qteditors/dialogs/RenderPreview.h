@@ -26,44 +26,41 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 #pragma once
+#include "../precompiled.h"
 
-enum class CameraDrawMode {
+struct entity_t;
+struct brush_t;
+
+enum class RenderPreviewMode {
 	Wireframe,
 	Solid,
 	Textures
 };
 
-class RenderCamera {
-	friend class CCamWnd;
-public:
+struct RenderPreviewCamera {
+	int			width, height;
 
 	idVec3		origin;
 	idAngles	angles;
-private:
-	int			width, height;
 
+	RenderPreviewMode mode;
+
+	idVec3		color;			// background
+
+	idVec3		forward, right, up;	// move matrix
 	idVec3		vup, vpn, vright;	// view matrix
-	idVec3		forward, right;	// move matrix
-	CameraDrawMode	drawMode;
 };
 
-
-/////////////////////////////////////////////////////////////////////////////
-// CCamWnd window
-
-class CCamWnd : public CWnd
+class RenderPreview : public QWidget
 {
-  DECLARE_DYNCREATE(CCamWnd);
-// Construction
 public:
-	CCamWnd();
-	~CCamWnd();
+	RenderPreview();
+	~RenderPreview();
 
-protected:
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+
 
 public:
-	RenderCamera& Camera(){ return m_Camera; };
+	RenderPreviewCamera& Camera() { return m_Camera; };
 	void Cam_MouseControl(float dtime);
 	void Cam_ChangeFloor(bool up);
 	void BuildRendererState();
@@ -75,7 +72,7 @@ public:
 	void ToggleSoundMode();
 	void UpdateCameraView();
 
-	void BuildEntityRenderState( entity_t *ent, bool update );
+	void BuildEntityRenderState(entity_t *ent, bool update);
 	bool GetRenderMode() {
 		return renderMode;
 	}
@@ -94,60 +91,25 @@ public:
 	bool GetSoundMode() {
 		return soundMode;
 	}
-	CameraDrawMode GetDrawMode() const {
-		return m_Camera.drawMode;
-	}
-	void SetDrawMode(CameraDrawMode mode) {
-		m_Camera.drawMode = mode;
-	}
-
-	//strafing forward/backward. positive distance is forward, negative distance is backward
-	void MoveCameraForwardBackward(float distance) {
-		VectorMA(m_Camera.origin, distance, m_Camera.forward, m_Camera.origin);
-	}
-
-	//strafing left/right. Negative distance is left, positive distance is right
-	void MoveCameraLeftRight(float distance) {
-		VectorMA(m_Camera.origin, distance, m_Camera.right, m_Camera.origin);
-	}
-
-	void MoveCameraUpDown(float distance) {
-		m_Camera.origin[2] += distance;		
-	}
-
-	void TurnCameraUpDown(float degree) {		
-		m_Camera.angles[0] = idMath::ClampFloat(-85, 85, m_Camera.angles[0] + degree);
-	}
-
-	void TurnCameraLeftRight(float degree) {
-		m_Camera.angles[1] += degree;		
-	}
-
-	const idVec3& GetOrigin() const {
-		return m_Camera.origin;
-	}
-
-	void SetOrigin(idVec3 origin) {
-		m_Camera.origin = origin;
-	}
 
 	void MarkWorldDirty();
 
-private:
+protected:
 	void SetProjectionMatrix();
 	void SetView(const idVec3 &origin, const idAngles &angles) {
 		m_Camera.origin = origin;
 		m_Camera.angles = angles;
 	}
-	
+
+	void Cam_Init();
 	void Cam_BuildMatrix();
 	void Cam_PositionDrag();
 	void Cam_MouseLook();
 	void Cam_MouseDown(int x, int y, int buttons);
-	void Cam_MouseUp (int x, int y, int buttons);
-	void Cam_MouseMoved (int x, int y, int buttons);
+	void Cam_MouseUp(int x, int y, int buttons);
+	void Cam_MouseMoved(int x, int y, int buttons);
 	void InitCull();
-	bool CullBrush (brush_t *b, bool cubicOnly);
+	bool CullBrush(brush_t *b, bool cubicOnly);
 	void Cam_Draw();
 	void Cam_Render();
 
@@ -163,8 +125,9 @@ private:
 	bool	soundMode;
 	void	FreeRendererState();
 	void	UpdateCaption();
+	bool	BuildBrushRenderData(brush_t *brush);
 
-	RenderCamera m_Camera;
+	RenderPreviewCamera m_Camera;
 	int	m_nCambuttonstate;
 	CPoint m_ptButton;
 	CPoint m_ptCursor;
@@ -179,7 +142,7 @@ private:
 
 	idPlane m_viewPlanes[5];
 
-	// Generated message map functions
+#if 0
 protected:
 	void OriginalMouseDown(UINT nFlags, CPoint point);
 	void OriginalMouseUp(UINT nFlags, CPoint point);
@@ -201,6 +164,7 @@ protected:
 	afx_msg void OnTimer(UINT nIDEvent);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+#endif
 };
 
 /////////////////////////////////////////////////////////////////////////////

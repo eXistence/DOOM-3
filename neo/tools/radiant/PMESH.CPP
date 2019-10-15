@@ -2595,58 +2595,30 @@ void Patch_DrawXY( patchMesh_t *pm ) {
 Patch_DrawCam
 ==================
 */
-void Patch_DrawCam( patchMesh_t *pm, bool selected ) {
+void Patch_DrawCam(patchMesh_t *pm, bool selected) {
 
-	camera_draw_mode nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
+	const auto nDrawMode = g_pParentWnd->GetCamera()->GetDrawMode();
 
-  idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES];
-  if(selected)
-    color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];
+	idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES];
+	if (selected)
+		color = g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES];
 
-	if ( g_bPatchWireFrame || nDrawMode == cd_wire ) {
+	if (g_bPatchWireFrame || nDrawMode == CameraDrawMode::Wireframe) {
 		glDisable(GL_CULL_FACE);
 		globalImages->BindNull();
 		DrawPatchMeshWireframe(pm, color);
 		glEnable(GL_CULL_FACE);
-	} else {
+	}
+	else {
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
 
-    const idMaterial* material = nullptr;
-		if ( nDrawMode == cd_texture ) {
-      material = pm->d_texture;
+		const idMaterial* material = nullptr;
+		if (nDrawMode == CameraDrawMode::Textures) {
+			material = pm->d_texture;
 		}
-    /*
-		if ( !pm->bSelected && pm->d_texture->GetEditorAlpha() != 1.0f ) {
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		}
-		}*/
 
 		DrawPatchMeshSolid(pm, true, material);
-
-    if(selected) {
-      //glEnable(GL_BLEND);
-      //DrawPatchMeshSolid(pm, idVec4(color.x, color.y, color.z, 0.25));
-      //DrawPatchMeshSolid(pm, true, material);
-      //glDisable(GL_BLEND);
-      //DrawPatchMeshWireframe(pm, idVec3(1,1,1));
-      //DrawPatchMeshHandles(pm);
-    }
-
-    /*
-		if ( !pm->bSelected && pm->d_texture->GetEditorAlpha() != 1.0f ) {
-			glDisable(GL_BLEND);
-		}
-
-    if(pm->bSelected) {
-      glEnable(GL_BLEND);
-      DrawPatchMeshSolid(pm, idVec4(color.x, color.y, color.z, 0.25) );
-      glDisable(GL_BLEND);
-      DrawPatchMeshWireframe(pm, true, color);
-      DrawPatchMeshHandles(pm);
-    }
-    */
 	}
 }
 

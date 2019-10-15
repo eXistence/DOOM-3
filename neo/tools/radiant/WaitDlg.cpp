@@ -50,11 +50,9 @@ CWaitDlg::CWaitDlg(CWnd* pParent, const char *msg)
 	//}}AFX_DATA_INIT
 	cancelPressed = false;
 	Create(CWaitDlg::IDD);
-	//g_pParentWnd->SetBusy(true);
 }
 
 CWaitDlg::~CWaitDlg() {
-	g_pParentWnd->SetBusy(false);
 }
 
 void CWaitDlg::DoDataExchange(CDataExchange* pDX)

@@ -53,11 +53,11 @@ DrawRenderModel
 ================
 */
 void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &axis, bool cameraView, const idVec3& color ) {
-  const int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
-  const idMat4 modelView = idMat4(axis, origin).Transpose();
+	const CameraDrawMode nDrawMode = g_pParentWnd->GetCamera()->GetDrawMode();
+	const idMat4 modelView = idMat4(axis, origin).Transpose();
 
-  GL_ModelViewMatrix.Push();
-  GL_ModelViewMatrix.Load(modelView.ToFloatPtr());
+	GL_ModelViewMatrix.Push();
+	GL_ModelViewMatrix.Load(modelView.ToFloatPtr());
 
 	for ( int i = 0; i < model->NumSurfaces(); i++ ) {
 		const modelSurface_t *surf = model->Surface( i );
@@ -68,7 +68,7 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
 
 			int offset = vertexCache.Bind(surf->geometry->ambientCache);
 
-			if (cameraView && (nDrawMode == cd_texture) && material) {
+			if (cameraView && (nDrawMode == CameraDrawMode::Textures) && material) {
 				GL_UseProgram(defaultProgram);
 				material->GetEditorImage()->Bind(1);
 
@@ -93,7 +93,7 @@ void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &
 		} else {
 			fhImmediateMode im;
 
-			if (cameraView && nDrawMode == cd_texture) {
+			if (cameraView && nDrawMode == CameraDrawMode::Textures) {
 				im.SetTexture(material->GetEditorImage());
 			}
 
@@ -404,7 +404,7 @@ void Face_SetColor(brush_t *b, face_t *f, float fCurveColor) {
 
 	// set shading for face
 	shade = ShadeForNormal( f->plane.Normal() );
-	if (g_pParentWnd->GetCamera()->Camera().draw_mode == cd_texture && (b->owner && !b->owner->eclass->fixedsize)) {
+	if (g_pParentWnd->GetCamera()->GetDrawMode() == CameraDrawMode::Textures && (b->owner && !b->owner->eclass->fixedsize)) {
 		// if (b->curveBrush) shade = fCurveColor;
 		f->d_color[0] = f->d_color[1] = f->d_color[2] = shade;
 	}
@@ -3711,9 +3711,9 @@ Brush_DrawModel
 ================
 */
 static void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
-	int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
+	const auto nDrawMode = g_pParentWnd->GetCamera()->GetDrawMode();
 
-	if ( camera && g_PrefsDlg.m_nEntityShowState != ENTITY_WIREFRAME && nDrawMode != cd_wire ) {
+	if ( camera && g_PrefsDlg.m_nEntityShowState != ENTITY_WIREFRAME && nDrawMode != CameraDrawMode::Wireframe ) {
 		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 	}
 	else {
@@ -3792,7 +3792,7 @@ static void GLTransformedVertex(float x, float y, float z, idMat3 mat, idVec3 or
 	v *= mat;
 	v += origin;
 
-	idVec3 n = v - g_pParentWnd->GetCamera()->Camera().origin;
+	idVec3 n = v - g_pParentWnd->GetCamera()->GetOrigin();
 	float max = n.Length() / maxDist;
 	if (color.x) {
 		color.x = max;
@@ -3865,8 +3865,10 @@ static void Brush_DrawAxis(const brush_t *b) {
 		idBounds bo;
 		bo.FromTransformedBounds(b->modelHandle->Bounds(), b->owner->origin, b->owner->rotation);
 
-		float dist = (g_pParentWnd->GetCamera()->Camera().origin - bo[0]).Length();
-		float dist2 = (g_pParentWnd->GetCamera()->Camera().origin - bo[1]).Length();
+		const auto cameraOrigin = g_pParentWnd->GetCamera()->GetOrigin();
+
+		float dist = (cameraOrigin - bo[0]).Length();
+		float dist2 = (cameraOrigin - bo[1]).Length();
 		if (dist2 > dist) {
 			dist = dist2;
 		}
@@ -4090,7 +4092,7 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 		return;
 	}
 
-	int nDrawMode = g_pParentWnd->GetCamera()->Camera().draw_mode;
+	
 
 	if (!(g_qeglobals.d_savedinfo.exclude & EXCLUDE_ANGLES) && (b->owner->eclass->nShowFlags & ECLASS_ANGLE)) {
 		Brush_DrawFacingAngle(b, b->owner, false, idVec4(1,1,1,1));
@@ -4187,8 +4189,9 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 			glDisable(GL_BLEND);
 		}
 #else
+	const auto nDrawMode = g_pParentWnd->GetCamera()->GetDrawMode();
     const idMaterial* material = nullptr;
-    if (nDrawMode == cd_texture && !b->forceWireFrame && face->d_texture) {
+    if (nDrawMode == CameraDrawMode::Textures && !b->forceWireFrame && face->d_texture) {
       material = face->d_texture;
     }
 

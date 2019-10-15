@@ -57,32 +57,22 @@ static int	cursorx, cursory;
     Z_MouseDown
  =======================================================================================================================
  */
-void Z_MouseDown(int x, int y, int buttons) {
-	idVec3	org, dir, vup, vright;
-	brush_t *b;
-
+void Z_MouseDown(int x, int y, int buttons) {	
 	Sys_GetCursorPos(&cursorx, &cursory);
 
-	vup[0] = 0;
-	vup[1] = 0;
-	vup[2] = 1 / z.scale;
+	auto vup = idVec3(0, 0, 1 / z.scale);
 
-	VectorCopy(z.origin, org);
+	idVec3 org = z.origin;	
 	org[2] += (y - (z.height / 2)) / z.scale;
 	org[1] = MIN_WORLD_COORD;
 
-	b = selected_brushes.next;
+	brush_t* b = selected_brushes.next;
 	if (b != &selected_brushes) {
 		org[0] = (b->mins[0] + b->maxs[0]) / 2;
 	}
 
-	dir[0] = 0;
-	dir[1] = 1;
-	dir[2] = 0;
-
-	vright[0] = 0;
-	vright[1] = 0;
-	vright[2] = 0;
+	auto dir = idVec3(0, 1, 0);
+	auto vright = idVec3(0, 0, 0);
 
 
 	// new mouse code for ZClip, I'll do this stuff before falling through into the standard ZWindow mouse code...

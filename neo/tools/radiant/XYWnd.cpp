@@ -39,12 +39,12 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../renderer/RenderList.h"
 #include "../../renderer/model_local.h"	// for idRenderModelLiquid
 
-void drawText(const char *text, float scale, const idVec3 &pos, const idVec4 &color) {
+void drawText(const char* text, float scale, const idVec3& pos, const idVec4& color) {
 	static const idMat3 rotation = idAngles(90, 90, 0).ToMat3();
 	RB_DrawText(text, pos, 0.4f * scale, color, rotation, 0);
 }
 
-void drawText(const char *text, float scale, const idVec3 &pos, const idVec4 &color, ViewType viewType) {
+void drawText(const char* text, float scale, const idVec3& pos, const idVec4& color, ViewType viewType) {
 	static const idMat3 xyRotation = idAngles(90, 90, 0).ToMat3();
 	static const idMat3 xzRotation = idAngles(0, 90, 0).ToMat3();
 	static const idMat3 yzRotation = idAngles(180, 0, 180).ToMat3();
@@ -63,11 +63,11 @@ void drawText(const char *text, float scale, const idVec3 &pos, const idVec3 &co
 	drawText(text, scale, pos, idVec4(color.x, color.y, color.z, 1.0f), viewType);
 }
 
-void drawText(const char *text, float scale, const idVec3 &pos, const idVec3 &color) {
+void drawText(const char* text, float scale, const idVec3& pos, const idVec3& color) {
 	drawText(text, scale, pos, idVec4(color.x, color.y, color.z, 1.0f));
 }
 
-void CXYWnd::DrawOrientedText(const char *text, const idVec3 &pos, const idVec4 &color) {
+void CXYWnd::DrawOrientedText(const char* text, const idVec3& pos, const idVec4& color) {
 	static const idMat3 xyRotation = idAngles(90, 90, 0).ToMat3();
 	static const idMat3 xzRotation = idAngles(0, 90, 0).ToMat3();
 	static const idMat3 yzRotation = idAngles(180, 0, 180).ToMat3();
@@ -82,7 +82,7 @@ void CXYWnd::DrawOrientedText(const char *text, const idVec3 &pos, const idVec4 
 	RB_DrawText(text, pos, 0.4f * 1.0 / m_fScale, color, rotation, 0);
 }
 
-void CXYWnd::DrawOrientedText(const char *text, const idVec3 &pos, const idVec3 &color) {
+void CXYWnd::DrawOrientedText(const char* text, const idVec3& pos, const idVec3& color) {
 	DrawOrientedText(text, pos, idVec4(color.x, color.y, color.z, 1.0f));
 }
 
@@ -1991,22 +1991,24 @@ idVec3 dragY;
 
 void CXYWnd::XY_MouseDown(int x, int y, int buttons) {
 	idVec3	point,center;
-	idVec3	origin, dir, right, up;
+	idVec3	dir, right, up;
 
 	m_nButtonstate = buttons;
 	m_nPressx = x;
 	m_nPressy = y;
-	VectorCopy(vec3_origin, m_vPressdelta);
+	m_vPressdelta = vec3_origin;
 
 	point.Zero();
 
 	XY_ToPoint(x, y, point);
 
-	VectorCopy(point, origin);
+	idVec3 origin = point;
+
+	const auto cameraOrigin = g_pParentWnd->GetCamera()->GetOrigin();
 
 	dir.Zero();
 	if (m_nViewType == ViewType::XY) {
-		origin[2] = HUGE_DISTANCE;
+		origin.z = HUGE_DISTANCE;
 		dir[2] = -1;
 		right[0] = 1 / m_fScale;
 		right[1] = 0;
@@ -2014,10 +2016,10 @@ void CXYWnd::XY_MouseDown(int x, int y, int buttons) {
 		up[0] = 0;
 		up[1] = 1 / m_fScale;
 		up[2] = 0;
-		point[2] = g_pParentWnd->GetCamera()->Camera().origin[2];
+		point[2] = cameraOrigin.z;
 	}
 	else if (m_nViewType == ViewType::YZ) {
-		origin[0] = HUGE_DISTANCE;
+		origin.x = HUGE_DISTANCE;
 		dir[0] = -1;
 		right[1] = 1 / m_fScale;
 		right[2] = 0;
@@ -2025,10 +2027,10 @@ void CXYWnd::XY_MouseDown(int x, int y, int buttons) {
 		up[0] = 0;
 		up[2] = 1 / m_fScale;
 		up[1] = 0;
-		point[0] = g_pParentWnd->GetCamera()->Camera().origin[0];
+		point[0] = cameraOrigin.x;
 	}
 	else {
-		origin[1] = HUGE_DISTANCE;
+		origin.y = HUGE_DISTANCE;
 		dir[1] = -1;
 		right[0] = 1 / m_fScale;
 		right[2] = 0;
@@ -2036,7 +2038,7 @@ void CXYWnd::XY_MouseDown(int x, int y, int buttons) {
 		up[0] = 0;
 		up[2] = 1 / m_fScale;
 		up[1] = 0;
-		point[1] = g_pParentWnd->GetCamera()->Camera().origin[1];
+		point[1] = cameraOrigin.y;
 	}
 
 	dragOrigin = m_vOrigin;
@@ -2172,8 +2174,8 @@ bool CXYWnd::DragDelta(int x, int y, idVec3 &move) {
 		}
 	}
 
-	VectorSubtract(delta, m_vPressdelta, move);
-	VectorCopy(delta, m_vPressdelta);
+	move = delta - m_vPressdelta;
+	m_vPressdelta = delta;
 
 
 	if (move[0] || move[1] || move[2]) {

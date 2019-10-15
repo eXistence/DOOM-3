@@ -26,26 +26,30 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
-
-#include "qe3.h"
-#include "Radiant.h"
-#include "XYWnd.h"
-#include "CamWnd.h"
-#include "splines.h"
-
+#include "RenderPreview.h"
 #include "../../renderer/tr_local.h"
 #include "../../renderer/model_local.h"	// for idRenderModelMD5
 #include "../../renderer/ImmediateMode.h"
+#include "../../tools/radiant/qe3.h"
 
-void DrawPathLines();
+extern void DrawPathLines();
+extern void Select_RotateTexture(float amt, bool absolute);
+extern void glLabeledPoint(idVec4 &color, idVec3 &point, float size, const char *label);
+extern int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, bool bmodel);
+
+static bool IsBModel(brush_t *b) {
+	const char *v = b->owner->ValueForKey("model");
+	if (v && *v) {
+		const char *n = b->owner->ValueForKey("name");
+		return (stricmp(n, v) == 0);
+	}
+	return false;
+}
 
 int g_axialAnchor = -1;
 int g_axialDest = -1;
 bool g_bAxialMode = false;
-
-static brush_t *g_pSplitList = NULL;
+brush_t *g_pSplitList = NULL;
 
 void ValidateAxialPoints() {
 	int faceCount = g_selectedFaces.Num();
@@ -57,21 +61,15 @@ void ValidateAxialPoints() {
 		if (g_axialDest >= selFace->face_winding->GetNumPoints()) {
 			g_axialDest = 0;
 		}
-	} else {
+	}
+	else {
 		g_axialDest = 0;
 		g_axialAnchor = 0;
 	}
 }
 
-// CCamWnd
-IMPLEMENT_DYNCREATE(CCamWnd, CWnd);
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-CCamWnd::CCamWnd() {
-	memset(&m_Camera, 0, sizeof(RenderCamera));
+RenderPreview::RenderPreview() {
+	memset(&m_Camera, 0, sizeof(camera_t));
 	worldDirty = true;
 	worldModel = NULL;
 	renderMode = false;
@@ -81,115 +79,15 @@ CCamWnd::CCamWnd() {
 	selectMode = false;
 	soundMode = false;
 	saveValid = false;
-	m_Camera.origin[0] = 0.0f;
-	m_Camera.origin[1] = 20.0f;
-	m_Camera.origin[2] = 72.0f;
+	Cam_Init();
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-CCamWnd::~CCamWnd() {
+RenderPreview::~RenderPreview() {
 }
 
-BEGIN_MESSAGE_MAP(CCamWnd, CWnd)
-//{{AFX_MSG_MAP(CCamWnd)
-	ON_WM_KEYDOWN()
-	ON_WM_PAINT()
-	ON_WM_DESTROY()
-	ON_WM_CLOSE()
-	ON_WM_MOUSEMOVE()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_LBUTTONUP()
-	ON_WM_MBUTTONDOWN()
-	ON_WM_MBUTTONUP()
-	ON_WM_RBUTTONDOWN()
-	ON_WM_RBUTTONUP()
-	ON_WM_CREATE()
-	ON_WM_SIZE()
-	ON_WM_KEYUP()
-	ON_WM_NCCALCSIZE()
-	ON_WM_KILLFOCUS()
-	ON_WM_SETFOCUS()
-	ON_WM_TIMER()
-	//}}AFX_MSG_MAP
-END_MESSAGE_MAP()
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-LONG WINAPI CamWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	RECT	rect;
+#if 0
 
-	GetClientRect(hWnd, &rect);
-
-	switch (uMsg)
-	{
-		case WM_KILLFOCUS:
-		case WM_SETFOCUS:
-			SendMessage(hWnd, WM_NCACTIVATE, uMsg == WM_SETFOCUS, 0);
-			return 0;
-
-		case WM_NCCALCSIZE: // don't let windows copy pixels
-			DefWindowProc(hWnd, uMsg, wParam, lParam);
-			return WVR_REDRAW;
-	}
-
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
-}
-
-//
-// =======================================================================================================================
-//    CCamWnd message handlers
-// =======================================================================================================================
-//
-BOOL CCamWnd::PreCreateWindow(CREATESTRUCT &cs) {
-	WNDCLASS	wc;
-	HINSTANCE	hInstance = AfxGetInstanceHandle();
-	if (::GetClassInfo(hInstance, CAMERA_WINDOW_CLASS, &wc) == FALSE) {
-		// Register a new class
-		memset(&wc, 0, sizeof(wc));
-
-		// wc.style = CS_NOCLOSE | CS_OWNDC;
-		wc.style = CS_NOCLOSE;
-		wc.lpszClassName = CAMERA_WINDOW_CLASS;
-		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wc.lpfnWndProc = CamWndProc;
-		if (AfxRegisterClass(&wc) == FALSE) {
-			Error("CCamWnd RegisterClass: failed");
-		}
-	}
-
-	cs.lpszClass = CAMERA_WINDOW_CLASS;
-	cs.lpszName = "CAM";
-	if (cs.style != QE3_CHILDSTYLE) {
-		cs.style = QE3_SPLITTER_STYLE;
-	}
-
-	BOOL	bResult = CWnd::PreCreateWindow(cs);
-
-	//
-	// See if the class already exists and if not then we need to register our new
-	// window class.
-	//
-	return bResult;
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
-	g_pParentWnd->HandleKey(nChar, nRepCnt, nFlags);
-}
-
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnPaint() {
+void RenderPreview::OnPaint() {
 	CPaintDC	dc(this);	// device context for painting
 	bool		bPaint = true;
 
@@ -210,7 +108,7 @@ void CCamWnd::OnPaint() {
 	g_pSplitList = NULL;
 	if (g_bClipMode) {
 		if (g_Clip1.Set() && g_Clip2.Set()) {
-			g_pSplitList = ((g_pParentWnd->ActiveXY()->GetViewType() == ViewType::XZ) ? !g_bSwitch : g_bSwitch) ? &g_brBackSplits : &g_brFrontSplits;
+			g_pSplitList = ((g_pParentWnd->ActiveXY()->GetViewType() == XZ) ? !g_bSwitch : g_bSwitch) ? &g_brBackSplits : &g_brFrontSplits;
 		}
 	}
 
@@ -220,155 +118,26 @@ void CCamWnd::OnPaint() {
 
 }
 
+#endif
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::OnDestroy() {
-	CWnd::OnDestroy();
+void RenderPreview::Cam_Init() {
+	// m_Camera.draw_mode = cd_texture;
+	m_Camera.origin[0] = 0.0f;
+	m_Camera.origin[1] = 20.0f;
+	m_Camera.origin[2] = 72.0f;
+	m_Camera.color[0] = 0.3f;
+	m_Camera.color[1] = 0.3f;
+	m_Camera.color[2] = 0.3f;
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::OnClose() {
-	CWnd::OnClose();
-}
-
-extern void Select_RotateTexture(float amt, bool absolute);
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnMouseMove(UINT nFlags, CPoint point) {
-	CRect	r;
-	GetClientRect(r);
-	if	(GetCapture() == this && (GetAsyncKeyState(VK_MENU) & 0x8000) && !((GetAsyncKeyState(VK_SHIFT) & 0x8000) || (GetAsyncKeyState(VK_CONTROL) & 0x8000))) {
-		if (GetAsyncKeyState(VK_CONTROL) & 0x8000) {
-			Select_RotateTexture((float)point.y - m_ptLastCursor.y);
-		}
-		else if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {
-			Select_ScaleTexture((float)point.x - m_ptLastCursor.x, (float)m_ptLastCursor.y - point.y);
-		}
-		else {
-			Select_ShiftTexture((float)point.x - m_ptLastCursor.x, (float)m_ptLastCursor.y - point.y);
-		}
-	}
-	else {
-		Cam_MouseMoved(point.x, r.bottom - 1 - point.y, nFlags);
-	}
-
-	m_ptLastCursor = point;
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnLButtonDown(UINT nFlags, CPoint point) {
-	m_ptLastCursor = point;
-	OriginalMouseDown(nFlags, point);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnLButtonUp(UINT nFlags, CPoint point) {
-	OriginalMouseUp(nFlags, point);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnMButtonDown(UINT nFlags, CPoint point) {
-	OriginalMouseDown(nFlags, point);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnMButtonUp(UINT nFlags, CPoint point) {
-	OriginalMouseUp(nFlags, point);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnRButtonDown(UINT nFlags, CPoint point) {
-	OriginalMouseDown(nFlags, point);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnRButtonUp(UINT nFlags, CPoint point) {
-	OriginalMouseUp(nFlags, point);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-int CCamWnd::OnCreate(LPCREATESTRUCT lpCreateStruct) {
-	if (CWnd::OnCreate(lpCreateStruct) == -1) {
-		return -1;
-	}
-
-	CDC *pDC = GetDC();
-	HDC hDC = pDC->GetSafeHdc();
-
-	QEW_SetupPixelFormat(hDC, true);
-
-	// report OpenGL information
-	common->Printf("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
-	common->Printf("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
-	common->Printf("GL_VERSION: %s\n", glGetString(GL_VERSION));
-	//common->Printf("GL_EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
-
-	return 0;
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OriginalMouseUp(UINT nFlags, CPoint point) {
-	CRect	r;
-	GetClientRect(r);
-	Cam_MouseUp(point.x, r.bottom - 1 - point.y, nFlags);
-	if (!(nFlags & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON))) {
-		ReleaseCapture();
-	}
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OriginalMouseDown(UINT nFlags, CPoint point) {
-	// if (GetTopWindow()->GetSafeHwnd() != GetSafeHwnd()) BringWindowToTop();
-	CRect	r;
-	GetClientRect(r);
-	SetFocus();
-	SetCapture();
-
-	// if (!(GetAsyncKeyState(VK_MENU) & 0x8000))
-	Cam_MouseDown(point.x, r.bottom - 1 - point.y, nFlags);
-}
-
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::Cam_BuildMatrix() {
+void RenderPreview::Cam_BuildMatrix() {
 
 	const float xa = ((renderMode) ? -m_Camera.angles[PITCH] : m_Camera.angles[PITCH]) * idMath::M_DEG2RAD;
 	const float ya = m_Camera.angles[YAW] * idMath::M_DEG2RAD;
@@ -399,7 +168,7 @@ void CCamWnd::Cam_BuildMatrix() {
  =======================================================================================================================
  */
 
-void CCamWnd::Cam_ChangeFloor(bool up) {
+void RenderPreview::Cam_ChangeFloor(bool up) {
 	brush_t *b;
 	float	d, bestd, current;
 	idVec3	start, dir;
@@ -415,7 +184,7 @@ void CCamWnd::Cam_ChangeFloor(bool up) {
 		bestd = 0;
 	}
 	else {
-		bestd = HUGE_DISTANCE*2;
+		bestd = HUGE_DISTANCE * 2;
 	}
 
 	for (b = active_brushes.next; b != &active_brushes; b = b->next) {
@@ -432,7 +201,7 @@ void CCamWnd::Cam_ChangeFloor(bool up) {
 		}
 	}
 
-	if (bestd == 0 || bestd == HUGE_DISTANCE*2) {
+	if (bestd == 0 || bestd == HUGE_DISTANCE * 2) {
 		return;
 	}
 
@@ -444,7 +213,7 @@ void CCamWnd::Cam_ChangeFloor(bool up) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::Cam_PositionDrag() {
+void RenderPreview::Cam_PositionDrag() {
 	int x, y;
 	Sys_GetCursorPos(&x, &y);
 	if (x != m_ptCursor.x || y != m_ptCursor.y) {
@@ -457,7 +226,7 @@ void CCamWnd::Cam_PositionDrag() {
 	}
 }
 
-void CCamWnd::Cam_MouseLook() {
+void RenderPreview::Cam_MouseLook() {
 	CPoint current;
 
 	GetCursorPos(&current);
@@ -479,7 +248,7 @@ void CCamWnd::Cam_MouseLook() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::Cam_MouseControl(float dtime) {
+void RenderPreview::Cam_MouseControl(float dtime) {
 	int		xl, xh;
 	int		yl, yh;
 	float	xf, yf;
@@ -513,15 +282,15 @@ void CCamWnd::Cam_MouseControl(float dtime) {
 #endif
 	{
 		xf *= 1.0f - idMath::Fabs(yf);
-		if ( xf < 0.0f ) {
+		if (xf < 0.0f) {
 			xf += 0.1f;
-			if ( xf > 0.0f ) {
+			if (xf > 0.0f) {
 				xf = 0.0f;
 			}
 		}
 		else {
 			xf -= 0.1f;
-			if ( xf < 0.0f ) {
+			if (xf < 0.0f) {
 				xf = 0.0f;
 			}
 		}
@@ -539,7 +308,7 @@ void CCamWnd::Cam_MouseControl(float dtime) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::Cam_MouseDown(int x, int y, int buttons) {
+void RenderPreview::Cam_MouseDown(int x, int y, int buttons) {
 	idVec3	dir;
 	float	f, r, u;
 	int		i;
@@ -568,18 +337,18 @@ void CCamWnd::Cam_MouseDown(int x, int y, int buttons) {
 	//
 	int nMouseButton = g_PrefsDlg.m_nMouseButtons == 2 ? MK_RBUTTON : MK_MBUTTON;
 	if
-	(
+		(
 		(buttons == MK_LBUTTON) ||
-		(buttons == (MK_LBUTTON | MK_SHIFT)) ||
-		(buttons == (MK_LBUTTON | MK_CONTROL)) ||
-		(buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT)) ||
-		(buttons == nMouseButton) ||
-		(buttons == (nMouseButton | MK_SHIFT)) ||
-		(buttons == (nMouseButton | MK_CONTROL)) ||
-		(buttons == (nMouseButton | MK_SHIFT | MK_CONTROL))
-	) {
+			(buttons == (MK_LBUTTON | MK_SHIFT)) ||
+			(buttons == (MK_LBUTTON | MK_CONTROL)) ||
+			(buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT)) ||
+			(buttons == nMouseButton) ||
+			(buttons == (nMouseButton | MK_SHIFT)) ||
+			(buttons == (nMouseButton | MK_CONTROL)) ||
+			(buttons == (nMouseButton | MK_SHIFT | MK_CONTROL))
+			) {
 		if (g_PrefsDlg.m_nMouseButtons == 2 && (buttons == (MK_RBUTTON | MK_SHIFT))) {
-			Cam_MouseControl( 0.1f );
+			Cam_MouseControl(0.1f);
 		}
 		else {
 			// something global needs to track which window is responsible for stuff
@@ -590,8 +359,8 @@ void CCamWnd::Cam_MouseDown(int x, int y, int buttons) {
 		return;
 	}
 
-	if ( buttons == MK_RBUTTON ) {
-		Cam_MouseControl( 0.1f );
+	if (buttons == MK_RBUTTON) {
+		Cam_MouseControl(0.1f);
 		return;
 	}
 }
@@ -600,7 +369,7 @@ void CCamWnd::Cam_MouseDown(int x, int y, int buttons) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::Cam_MouseUp(int x, int y, int buttons) {
+void RenderPreview::Cam_MouseUp(int x, int y, int buttons) {
 	m_nCambuttonstate = 0;
 	Drag_MouseUp(buttons);
 }
@@ -609,7 +378,7 @@ void CCamWnd::Cam_MouseUp(int x, int y, int buttons) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::Cam_MouseMoved(int x, int y, int buttons) {
+void RenderPreview::Cam_MouseMoved(int x, int y, int buttons) {
 	m_nCambuttonstate = buttons;
 	if (!buttons) {
 		return;
@@ -623,7 +392,7 @@ void CCamWnd::Cam_MouseMoved(int x, int y, int buttons) {
 		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		return;
 	}
-	else if ( buttons == (MK_RBUTTON | MK_CONTROL | MK_SHIFT) ) {
+	else if (buttons == (MK_RBUTTON | MK_CONTROL | MK_SHIFT)) {
 		Cam_MouseLook();
 		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		return;
@@ -641,7 +410,7 @@ void CCamWnd::Cam_MouseMoved(int x, int y, int buttons) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::InitCull() {
+void RenderPreview::InitCull() {
 #if 1
 	const float xfov = 90;
 	const float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
@@ -701,9 +470,9 @@ void CCamWnd::InitCull() {
  =======================================================================================================================
  =======================================================================================================================
  */
-bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
+bool RenderPreview::CullBrush(brush_t *b, bool cubicOnly) {
 
-	if ( b->forceVisibile ) {
+	if (b->forceVisibile) {
 		return false;
 	}
 
@@ -788,17 +557,17 @@ bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
  =======================================================================================================================
  =======================================================================================================================
  */
-static void setGLMode(CameraDrawMode mode) {
+static void setGLMode(RenderPreviewMode mode) {
 	switch (mode)
 	{
-	case CameraDrawMode::Wireframe:
+	case RenderPreviewMode::Wireframe:
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		globalImages->BindNull();
 		glDisable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
 		break;
 
-	case CameraDrawMode::Solid:
+	case RenderPreviewMode::Solid:
 		glCullFace(GL_FRONT);
 		glEnable(GL_CULL_FACE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -808,7 +577,7 @@ static void setGLMode(CameraDrawMode mode) {
 		glDepthFunc(GL_LEQUAL);
 		break;
 
-	case CameraDrawMode::Textures:
+	case RenderPreviewMode::Textures:
 		glCullFace(GL_FRONT);
 		glEnable(GL_CULL_FACE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -817,13 +586,14 @@ static void setGLMode(CameraDrawMode mode) {
 		glDepthFunc(GL_LEQUAL);
 		break;
 
-    default:
-      assert(false && "unknown GL mode!?");
+	default:
+		assert(false && "unknown GL mode!?");
 	}
 }
 
 
-extern void glLabeledPoint(idVec4 &color, idVec3 &point, float size, const char *label);
+
+
 static void DrawAxial(face_t *selFace) {
 	if (g_bAxialMode) {
 		idVec3 points[4];
@@ -834,19 +604,19 @@ static void DrawAxial(face_t *selFace) {
 
 		ValidateAxialPoints();
 		points[0] = (*selFace->face_winding)[g_axialAnchor].ToVec3();
-		VectorMA (points[0], 1, selFace->plane, points[0]);
-		VectorMA (points[0], 4, selFace->plane, points[1]);
+		VectorMA(points[0], 1, selFace->plane, points[0]);
+		VectorMA(points[0], 4, selFace->plane, points[1]);
 		points[3] = (*selFace->face_winding)[g_axialDest].ToVec3();
-		VectorMA (points[3], 1, selFace->plane, points[3]);
-		VectorMA (points[3], 4, selFace->plane, points[2]);
+		VectorMA(points[3], 1, selFace->plane, points[3]);
+		VectorMA(points[3], 4, selFace->plane, points[2]);
 		glLabeledPoint(idVec4(1, 0, 0, 1), points[1], 3, "Anchor");
 		glLabeledPoint(idVec4(1, 1, 0, 1), points[2], 3, "Dest");
-    fhImmediateMode im;
-		im.Begin (GL_LINE_STRIP);
-		im.Vertex3fv( points[0].ToFloatPtr() );
-		im.Vertex3fv( points[1].ToFloatPtr() );
-		im.Vertex3fv( points[2].ToFloatPtr() );
-		im.Vertex3fv( points[3].ToFloatPtr() );
+		fhImmediateMode im;
+		im.Begin(GL_LINE_STRIP);
+		im.Vertex3fv(points[0].ToFloatPtr());
+		im.Vertex3fv(points[1].ToFloatPtr());
+		im.Vertex3fv(points[2].ToFloatPtr());
+		im.Vertex3fv(points[3].ToFloatPtr());
 		im.End();
 	}
 }
@@ -854,10 +624,10 @@ static void DrawAxial(face_t *selFace) {
 
 /*
  =======================================================================================================================
-    Cam_Draw
+	Cam_Draw
  =======================================================================================================================
  */
-void CCamWnd::SetProjectionMatrix() {
+void RenderPreview::SetProjectionMatrix() {
 	float xfov = 90;
 	float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
 
@@ -869,12 +639,12 @@ void CCamWnd::SetProjectionMatrix() {
 	//
 	// set up projection matrix
 	//
-	zNear	= r_znear.GetFloat();
+	zNear = r_znear.GetFloat();
 
-	ymax = zNear * tan( yfov * idMath::PI / 360.0f );
+	ymax = zNear * tan(yfov * idMath::PI / 360.0f);
 	ymin = -ymax;
 
-	xmax = zNear * tan( xfov * idMath::PI / 360.0f );
+	xmax = zNear * tan(xfov * idMath::PI / 360.0f);
 	xmin = -xmax;
 
 	width = xmax - xmin;
@@ -882,12 +652,12 @@ void CCamWnd::SetProjectionMatrix() {
 
 	projectionMatrix[0] = 2 * zNear / width;
 	projectionMatrix[4] = 0;
-	projectionMatrix[8] = ( xmax + xmin ) / width;	// normally 0
+	projectionMatrix[8] = (xmax + xmin) / width;	// normally 0
 	projectionMatrix[12] = 0;
 
 	projectionMatrix[1] = 0;
 	projectionMatrix[5] = 2 * zNear / height;
-	projectionMatrix[9] = ( ymax + ymin ) / height;	// normally 0
+	projectionMatrix[9] = (ymax + ymin) / height;	// normally 0
 	projectionMatrix[13] = 0;
 
 	// this is the far-plane-at-infinity formulation
@@ -904,15 +674,15 @@ void CCamWnd::SetProjectionMatrix() {
 	GL_ProjectionMatrix.Load(projectionMatrix);
 }
 
-void CCamWnd::Cam_Draw() {
+void RenderPreview::Cam_Draw() {
 	if (!active_brushes.next) {
 		return;					// not valid yet
 	}
 
 	// set the sound origin for both simple draw and rendered mode
 	// the editor uses opposite pitch convention
-	idMat3	axis = idAngles( -m_Camera.angles.pitch, m_Camera.angles.yaw, m_Camera.angles.roll ).ToMat3();
-	g_qeglobals.sw->PlaceListener( m_Camera.origin, axis, 0, Sys_Milliseconds(), "Undefined" );
+	idMat3	axis = idAngles(-m_Camera.angles.pitch, m_Camera.angles.yaw, m_Camera.angles.roll).ToMat3();
+	g_qeglobals.sw->PlaceListener(m_Camera.origin, axis, 0, Sys_Milliseconds(), "Undefined");
 
 	if (renderMode) {
 		Cam_Render();
@@ -936,11 +706,11 @@ void CCamWnd::Cam_Draw() {
 	g_qeglobals.surfaceBuffer.Clear();
 	for (auto brush = active_brushes.next; brush != &active_brushes; brush = brush->next) {
 
-		if ( CullBrush(brush, false) ) {
+		if (CullBrush(brush, false)) {
 			continue;
 		}
 
-		if ( FilterBrush(brush) ) {
+		if (FilterBrush(brush)) {
 			continue;
 		}
 
@@ -950,14 +720,14 @@ void CCamWnd::Cam_Draw() {
 			}
 		}
 
-		setGLMode(m_Camera.drawMode);
+		setGLMode(m_Camera.mode);
 		Brush_Draw(brush, false);
 	}
 
 	if (!renderMode) {
 		// draw normally
 		for (auto brush = pList->next; brush != pList; brush = brush->next) {
-			setGLMode(m_Camera.drawMode);
+			setGLMode(m_Camera.mode);
 			Brush_Draw(brush, true);
 		}
 	}
@@ -971,9 +741,9 @@ void CCamWnd::Cam_Draw() {
 	g_qeglobals.pointBuffer.Clear();
 
 
-	const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.25f );
+	const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.25f);
 
-	setGLMode(m_Camera.drawMode);
+	setGLMode(m_Camera.mode);
 
 
 	glEnable(GL_BLEND);
@@ -981,27 +751,27 @@ void CCamWnd::Cam_Draw() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	globalImages->BindNull();
 
-	if(renderMode) {
+	if (renderMode) {
 		for (auto brush = pList->next; brush != pList; brush = brush->next) {
 			if (brush->pPatch /*|| brush->modelHandle > 0*/) {
-				DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
+				DrawPatchMeshWireframe(brush->pPatch, idVec3(1, 1, 1));
 			}
 		}
 	}
 
 	for (auto brush = pList->next; brush != pList; brush = brush->next) {
-		if(brush->pPatch) {
+		if (brush->pPatch) {
 			DrawPatchMeshSolid(brush->pPatch, color);
-			DrawPatchMeshWireframe(brush->pPatch, idVec3(1,1,1));
+			DrawPatchMeshWireframe(brush->pPatch, idVec3(1, 1, 1));
 			DrawPatchMeshHandles(brush->pPatch);
 			continue;
 		}
 
-		if ( brush->modelHandle > 0) {
+		if (brush->modelHandle > 0) {
 			continue;
 		}
 
-		if ( brush->owner->eclass->entityModel ) {
+		if (brush->owner->eclass->entityModel) {
 			continue;
 		}
 
@@ -1036,7 +806,7 @@ void CCamWnd::Cam_Draw() {
 	if (renderMode) {
 		for (const auto& selected : g_selectedFaces) {
 			const face_t *selFace = selected.GetFace();
-			Face_DrawOutline( selFace, idVec3(1,0,0));
+			Face_DrawOutline(selFace, idVec3(1, 0, 0));
 		}
 	}
 
@@ -1046,7 +816,7 @@ void CCamWnd::Cam_Draw() {
 		}
 
 		for (auto face = brush->brush_faces; face; face = face->next) {
-			Face_DrawOutline( face, idVec3(1,1,1));
+			Face_DrawOutline(face, idVec3(1, 1, 1));
 		}
 	}
 
@@ -1061,7 +831,7 @@ void CCamWnd::Cam_Draw() {
 		im.Color3f(0, 1, 0);
 		im.Begin(GL_POINTS);
 		for (int i = 0; i < g_qeglobals.d_numpoints; i++) {
-			im.Vertex3fv( g_qeglobals.d_points[i].ToFloatPtr() );
+			im.Vertex3fv(g_qeglobals.d_points[i].ToFloatPtr());
 		}
 
 		im.End();
@@ -1076,16 +846,16 @@ void CCamWnd::Cam_Draw() {
 		for (int i = 0; i < g_qeglobals.d_numedges; i++) {
 			v1 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p1].ToFloatPtr();
 			v2 = g_qeglobals.d_points[g_qeglobals.d_edges[i].p2].ToFloatPtr();
-			im.Vertex3f( (v1[0] + v2[0]) * 0.5f, (v1[1] + v2[1]) * 0.5f, (v1[2] + v2[2]) * 0.5f );
+			im.Vertex3f((v1[0] + v2[0]) * 0.5f, (v1[1] + v2[1]) * 0.5f, (v1[2] + v2[2]) * 0.5f);
 		}
 
 		im.End();
 		glPointSize(1);
 	}
 
-	g_splineList->draw (static_cast<bool>(g_qeglobals.d_select_mode == sel_addpoint || g_qeglobals.d_select_mode == sel_editpoint));
+	g_splineList->draw(static_cast<bool>(g_qeglobals.d_select_mode == sel_addpoint || g_qeglobals.d_select_mode == sel_editpoint));
 
-	if ( g_qeglobals.selectObject && (g_qeglobals.d_select_mode == sel_addpoint || g_qeglobals.d_select_mode == sel_editpoint) ) {
+	if (g_qeglobals.selectObject && (g_qeglobals.d_select_mode == sel_addpoint || g_qeglobals.d_select_mode == sel_editpoint)) {
 		g_qeglobals.selectObject->drawSelection();
 	}
 
@@ -1112,48 +882,7 @@ void CCamWnd::Cam_Draw() {
 	}
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnSize(UINT nType, int cx, int cy) {
-	CWnd::OnSize(nType, cx, cy);
-
-	CRect	rect;
-	GetClientRect(rect);
-	m_Camera.width = rect.right;
-	m_Camera.height = rect.bottom;
-	InvalidateRect(NULL, false);
-}
-
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void CCamWnd::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags) {
-	g_pParentWnd->HandleKey(nChar, nRepCnt, nFlags, false);
-}
-
-bool IsBModel(brush_t *b) {
-	const char *v = b->owner->ValueForKey( "model" );
-	if (v && *v) {
-		const char *n = b->owner->ValueForKey("name");
-		return (stricmp( n, v ) == 0);
-	}
-	return false;
-}
-
-/*
-================
-BuildEntityRenderState
-
-Creates or updates modelDef and lightDef for an entity
-================
-*/
-int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, bool bmodel);
-
-void CCamWnd::BuildEntityRenderState( entity_t *ent, bool update) {
+void RenderPreview::BuildEntityRenderState(entity_t *ent, bool update) {
 	const char	*v;
 	idDict		spawnArgs;
 	const char	*name = NULL;
@@ -1161,20 +890,20 @@ void CCamWnd::BuildEntityRenderState( entity_t *ent, bool update) {
 	ent->UpdateSoundEmitter();
 
 	// delete the existing def if we aren't creating a brand new world
-	if ( !update ) {
-		if ( ent->lightDef >= 0 ) {
-			g_qeglobals.rw->FreeLightDef( ent->lightDef );
+	if (!update) {
+		if (ent->lightDef >= 0) {
+			g_qeglobals.rw->FreeLightDef(ent->lightDef);
 			ent->lightDef = -1;
 		}
 
-		if ( ent->modelDef >= 0 ) {
-			g_qeglobals.rw->FreeEntityDef( ent->modelDef );
+		if (ent->modelDef >= 0) {
+			g_qeglobals.rw->FreeEntityDef(ent->modelDef);
 			ent->modelDef = -1;
 		}
 	}
 
 	// if an entity doesn't have any brushes at all, don't do anything
-	if ( ent->brushes.onext == &ent->brushes ) {
+	if (ent->brushes.onext == &ent->brushes) {
 		return;
 	}
 
@@ -1189,80 +918,81 @@ void CCamWnd::BuildEntityRenderState( entity_t *ent, bool update) {
 	}
 
 	// any entity can have a model
-	name = ent->ValueForKey( "name" );
+	name = ent->ValueForKey("name");
 	v = spawnArgs.GetString("model");
-	if ( v && *v ) {
+	if (v && *v) {
 		renderEntity_t	refent;
 
 		refent.referenceSound = ent->soundEmitter;
 
-		if ( !stricmp( name, v ) ) {
+		if (!stricmp(name, v)) {
 			// build the model from brushes
 			idTriList tris(1024);
 			idMatList mats(1024);
 
 			for (brush_t *b = ent->brushes.onext; b != &ent->brushes; b = b->onext) {
-				Brush_ToTris( b, &tris, &mats, false, true);
+				Brush_ToTris(b, &tris, &mats, false, true);
 			}
 
-			if ( ent->modelDef >= 0 ) {
-				g_qeglobals.rw->FreeEntityDef( ent->modelDef );
+			if (ent->modelDef >= 0) {
+				g_qeglobals.rw->FreeEntityDef(ent->modelDef);
 				ent->modelDef = -1;
 			}
 
-			idRenderModel *bmodel = renderModelManager->FindModel( name );
+			idRenderModel *bmodel = renderModelManager->FindModel(name);
 
-			if ( bmodel ) {
-				renderModelManager->RemoveModel( bmodel );
-				renderModelManager->FreeModel( bmodel );
+			if (bmodel) {
+				renderModelManager->RemoveModel(bmodel);
+				renderModelManager->FreeModel(bmodel);
 			}
 
 			bmodel = renderModelManager->AllocModel();
 
-			bmodel->InitEmpty( name );
+			bmodel->InitEmpty(name);
 
 			// add the surfaces to the renderModel
 			modelSurface_t	surf;
-			for ( int i = 0 ; i < tris.Num() ; i++ ) {
+			for (int i = 0; i < tris.Num(); i++) {
 				surf.geometry = tris[i];
 				surf.shader = mats[i];
-				bmodel->AddSurface( surf );
+				bmodel->AddSurface(surf);
 			}
 
 			bmodel->FinishSurfaces();
 
-			renderModelManager->AddModel( bmodel );
+			renderModelManager->AddModel(bmodel);
 
 			// FIXME: brush entities
-			gameEdit->ParseSpawnArgsToRenderEntity( &spawnArgs, &refent );
+			gameEdit->ParseSpawnArgsToRenderEntity(&spawnArgs, &refent);
 
-			ent->modelDef = g_qeglobals.rw->AddEntityDef( &refent );
+			ent->modelDef = g_qeglobals.rw->AddEntityDef(&refent);
 
-		} else {
+		}
+		else {
 			// use the game's epair parsing code so
 			// we can use the same renderEntity generation
-			gameEdit->ParseSpawnArgsToRenderEntity( &spawnArgs, &refent );
-			idRenderModelMD5 *md5 = dynamic_cast<idRenderModelMD5 *>( refent.hModel );
+			gameEdit->ParseSpawnArgsToRenderEntity(&spawnArgs, &refent);
+			idRenderModelMD5 *md5 = dynamic_cast<idRenderModelMD5 *>(refent.hModel);
 			if (md5) {
 				idStr str;
 				spawnArgs.GetString("anim", "idle", str);
 				refent.numJoints = md5->NumJoints();
-				if ( update && refent.joints ) {
-					Mem_Free16( refent.joints );
+				if (update && refent.joints) {
+					Mem_Free16(refent.joints);
 				}
-				refent.joints = ( idJointMat * )Mem_Alloc16( refent.numJoints * sizeof( *refent.joints ) );
+				refent.joints = (idJointMat *)Mem_Alloc16(refent.numJoints * sizeof(*refent.joints));
 				const idMD5Anim *anim = gameEdit->ANIM_GetAnimFromEntityDef(spawnArgs.GetString("classname"), str);
 				int frame = spawnArgs.GetInt("frame") + 1;
-				if ( frame < 1 ) {
+				if (frame < 1) {
 					frame = 1;
 				}
-				const idVec3 &offset = gameEdit->ANIM_GetModelOffsetFromEntityDef( spawnArgs.GetString("classname") );
-				gameEdit->ANIM_CreateAnimFrame( md5, anim, refent.numJoints, refent.joints, ( frame * 1000 ) / 24, offset, false );
+				const idVec3 &offset = gameEdit->ANIM_GetModelOffsetFromEntityDef(spawnArgs.GetString("classname"));
+				gameEdit->ANIM_CreateAnimFrame(md5, anim, refent.numJoints, refent.joints, (frame * 1000) / 24, offset, false);
 			}
 			if (ent->modelDef >= 0) {
-				g_qeglobals.rw->FreeEntityDef( ent->modelDef );
+				g_qeglobals.rw->FreeEntityDef(ent->modelDef);
 			}
-			ent->modelDef = g_qeglobals.rw->AddEntityDef( &refent );
+			ent->modelDef = g_qeglobals.rw->AddEntityDef(&refent);
 		}
 	}
 
@@ -1271,7 +1001,7 @@ void CCamWnd::BuildEntityRenderState( entity_t *ent, bool update) {
 		return;
 	}
 
-	if ( spawnArgs.GetBool( "start_off" ) ) {
+	if (spawnArgs.GetBool("start_off")) {
 		return;
 	}
 	// use the game's epair parsing code so
@@ -1279,23 +1009,24 @@ void CCamWnd::BuildEntityRenderState( entity_t *ent, bool update) {
 
 	renderLight_t	lightParms;
 
-	gameEdit->ParseSpawnArgsToRenderLight( &spawnArgs, &lightParms );
+	gameEdit->ParseSpawnArgsToRenderLight(&spawnArgs, &lightParms);
 	lightParms.referenceSound = ent->soundEmitter;
 
 	if (update && ent->lightDef >= 0) {
-		g_qeglobals.rw->UpdateLightDef( ent->lightDef, &lightParms );
-	} else {
+		g_qeglobals.rw->UpdateLightDef(ent->lightDef, &lightParms);
+	}
+	else {
 		if (ent->lightDef >= 0) {
 			g_qeglobals.rw->FreeLightDef(ent->lightDef);
 		}
-		ent->lightDef = g_qeglobals.rw->AddLightDef( &lightParms );
+		ent->lightDef = g_qeglobals.rw->AddLightDef(&lightParms);
 	}
 }
 
 
 int Brush_TransformModel(brush_t *brush, idTriList *tris, idMatList *mats) {
 	int ret = 0;
-	if (brush->modelHandle > 0 ) {
+	if (brush->modelHandle > 0) {
 		idRenderModel *model = brush->modelHandle;
 		if (model) {
 			float	a = brush->owner->FloatForKey("angle");
@@ -1303,8 +1034,8 @@ int Brush_TransformModel(brush_t *brush, idTriList *tris, idMatList *mats) {
 			//FIXME: support full rotation matrix
 			bool matrix = false;
 			if (a) {
-				s = sin( DEG2RAD(a) );
-				c = cos( DEG2RAD(a) );
+				s = sin(DEG2RAD(a));
+				c = cos(DEG2RAD(a));
 			}
 			idMat3 mat;
 			if (brush->owner->GetMatrixForKey("rotation", mat)) {
@@ -1312,15 +1043,16 @@ int Brush_TransformModel(brush_t *brush, idTriList *tris, idMatList *mats) {
 			}
 
 
-			for (int i = 0; i < model->NumSurfaces() ; i++) {
-				const modelSurface_t	*surf = model->Surface( i );
+			for (int i = 0; i < model->NumSurfaces(); i++) {
+				const modelSurface_t	*surf = model->Surface(i);
 				srfTriangles_t	*tri = surf->geometry;
 				srfTriangles_t *tri2 = R_CopyStaticTriSurf(tri);
 				for (int j = 0; j < tri2->numVerts; j++) {
 					idVec3	v;
 					if (matrix) {
 						v = tri2->verts[j].xyz * brush->owner->rotation + brush->owner->origin;
-					} else {
+					}
+					else {
 						v = tri2->verts[j].xyz;
 						VectorAdd(v, brush->owner->origin, v);
 						float x = v[0];
@@ -1337,7 +1069,7 @@ int Brush_TransformModel(brush_t *brush, idTriList *tris, idMatList *mats) {
 					tri2->verts[j].xyz = v;
 				}
 				tris->Append(tri2);
-				mats->Append( surf->shader );
+				mats->Append(surf->shader);
 			}
 			return model->NumSurfaces();
 		}
@@ -1351,41 +1083,43 @@ int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, 
 	//
 	// patches
 	//
-	if (brush->modelHandle > 0 ) {
+	if (brush->modelHandle > 0) {
 		if (!models) {
 			return 0;
-		} else {
+		}
+		else {
 			return Brush_TransformModel(brush, tris, mats);
 		}
 	}
 
 	int numSurfaces = 0;
 
-	if ( brush->owner->eclass->fixedsize && !brush->entityModel) {
+	if (brush->owner->eclass->fixedsize && !brush->entityModel) {
 		return NULL;
 	}
 
-	if ( brush->pPatch ) {
+	if (brush->pPatch) {
 		patchMesh_t *pm;
 		int			width, height;
 
 		pm = brush->pPatch;
 
 		// build a patch mesh
-		idSurface_Patch *cp = new idSurface_Patch( pm->width * 6, pm->height * 6 );
-		cp->SetSize( pm->width, pm->height );
-		for ( i = 0; i < pm->width; i++ ) {
-			for ( j = 0; j < pm->height; j++ ) {
-				(*cp)[j*cp->GetWidth()+i].xyz =  pm->ctrl(i, j).xyz;
-				(*cp)[j*cp->GetWidth()+i].st = pm->ctrl(i, j).st;
+		idSurface_Patch *cp = new idSurface_Patch(pm->width * 6, pm->height * 6);
+		cp->SetSize(pm->width, pm->height);
+		for (i = 0; i < pm->width; i++) {
+			for (j = 0; j < pm->height; j++) {
+				(*cp)[j*cp->GetWidth() + i].xyz = pm->ctrl(i, j).xyz;
+				(*cp)[j*cp->GetWidth() + i].st = pm->ctrl(i, j).st;
 			}
 		}
 
 		// subdivide it
-		if ( pm->explicitSubdivisions ) {
-			cp->SubdivideExplicit( pm->horzSubdivisions, pm->vertSubdivisions, true );
-		} else {
-			cp->Subdivide( DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_LENGTH, true );
+		if (pm->explicitSubdivisions) {
+			cp->SubdivideExplicit(pm->horzSubdivisions, pm->vertSubdivisions, true);
+		}
+		else {
+			cp->Subdivide(DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_ERROR, DEFAULT_CURVE_MAX_LENGTH, true);
 		}
 		width = cp->GetWidth();
 		height = cp->GetHeight();
@@ -1393,10 +1127,10 @@ int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, 
 		// convert to srfTriangles
 		tri = R_AllocStaticTriSurf();
 		tri->numVerts = width * height;
-		tri->numIndexes = 6 * ( width - 1 ) * ( height - 1 );
-		R_AllocStaticTriSurfVerts( tri, tri->numVerts );
-		R_AllocStaticTriSurfIndexes( tri, tri->numIndexes );
-		for ( i = 0 ; i < tri->numVerts ; i++ ) {
+		tri->numIndexes = 6 * (width - 1) * (height - 1);
+		R_AllocStaticTriSurfVerts(tri, tri->numVerts);
+		R_AllocStaticTriSurfIndexes(tri, tri->numIndexes);
+		for (i = 0; i < tri->numVerts; i++) {
 			tri->verts[i] = (*cp)[i];
 			if (bmodel) {
 				tri->verts[i].xyz -= brush->owner->origin;
@@ -1404,14 +1138,14 @@ int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, 
 		}
 
 		tri->numIndexes = 0;
-		for ( i = 1 ; i < width ; i++ ) {
-			for ( j = 1 ; j < height ; j++ ) {
-				tri->indexes[tri->numIndexes++] = ( j - 1 ) * width + i;
-				tri->indexes[tri->numIndexes++] = ( j - 1 ) * width + i - 1;
+		for (i = 1; i < width; i++) {
+			for (j = 1; j < height; j++) {
+				tri->indexes[tri->numIndexes++] = (j - 1) * width + i;
+				tri->indexes[tri->numIndexes++] = (j - 1) * width + i - 1;
 				tri->indexes[tri->numIndexes++] = j * width + i - 1;
 
 				tri->indexes[tri->numIndexes++] = j * width + i;
-				tri->indexes[tri->numIndexes++] = ( j - 1 ) * width + i;
+				tri->indexes[tri->numIndexes++] = (j - 1) * width + i;
 				tri->indexes[tri->numIndexes++] = j * width + i - 1;
 			}
 		}
@@ -1428,7 +1162,7 @@ int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, 
 	//
 	// normal brush
 	//
-	for ( face_t *face = brush->brush_faces ; face; face = face->next ) {
+	for (face_t *face = brush->brush_faces; face; face = face->next) {
 		idWinding *w;
 
 		w = face->face_winding;
@@ -1438,11 +1172,11 @@ int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, 
 
 		tri = R_AllocStaticTriSurf();
 		tri->numVerts = w->GetNumPoints();
-		tri->numIndexes = ( w->GetNumPoints() - 2 ) * 3;
-		R_AllocStaticTriSurfVerts( tri, tri->numVerts );
-		R_AllocStaticTriSurfIndexes( tri, tri->numIndexes );
+		tri->numIndexes = (w->GetNumPoints() - 2) * 3;
+		R_AllocStaticTriSurfVerts(tri, tri->numVerts);
+		R_AllocStaticTriSurfIndexes(tri, tri->numIndexes);
 
-		for ( i = 0 ; i < tri->numVerts ; i++ ) {
+		for (i = 0; i < tri->numVerts; i++) {
 
 			tri->verts[i].Clear();
 
@@ -1450,7 +1184,7 @@ int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, 
 			tri->verts[i].xyz[1] = (*w)[i][1];
 			tri->verts[i].xyz[2] = (*w)[i][2];
 
-			if ( bmodel ) {
+			if (bmodel) {
 				tri->verts[i].xyz -= brush->owner->origin;
 			}
 
@@ -1461,9 +1195,9 @@ int Brush_ToTris(brush_t *brush, idTriList *tris, idMatList *mats, bool models, 
 		}
 
 		tri->numIndexes = 0;
-		for ( i = 2 ; i < w->GetNumPoints() ; i++ ) {
+		for (i = 2; i < w->GetNumPoints(); i++) {
 			tri->indexes[tri->numIndexes++] = 0;
-			tri->indexes[tri->numIndexes++] = i-1;
+			tri->indexes[tri->numIndexes++] = i - 1;
 			tri->indexes[tri->numIndexes++] = i;
 		}
 
@@ -1484,7 +1218,7 @@ void Select_ToOBJ() {
 
 		for (brush_t *b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 
-			if ( b->hiddenBrush ) {
+			if (b->hiddenBrush) {
 				continue;
 			}
 
@@ -1503,52 +1237,52 @@ void Select_ToOBJ() {
 		sprintf(mtlFilePath, "%s.mtl", objFilePath);
 		sprintf(objFilePath, "%s", dlgFile.GetPathName().GetBuffer(0));
 
-		idFile *objFile = fileSystem->OpenExplicitFileWrite( objFilePath );
-		idFile *mtlFile = fileSystem->OpenExplicitFileWrite( mtlFilePath );
+		idFile *objFile = fileSystem->OpenExplicitFileWrite(objFilePath);
+		idFile *mtlFile = fileSystem->OpenExplicitFileWrite(mtlFilePath);
 
 		Tris_ToOBJ(tris, mats, objFile, mtlFile);
 
-		fileSystem->CloseFile( objFile );
-		fileSystem->CloseFile( mtlFile );
+		fileSystem->CloseFile(objFile);
+		fileSystem->CloseFile(mtlFile);
 
-		for( i = 0; i < tris.Num(); i++ ) {
-			R_FreeStaticTriSurf( tris[i] );
+		for (i = 0; i < tris.Num(); i++) {
+			R_FreeStaticTriSurf(tris[i]);
 		}
 		tris.Clear();
 	}
 }
 
 void Select_ToCM() {
-	CFileDialog dlgFile( FALSE, "lwo, ase", NULL, 0, "(*.lwo)|*.lwo|(*.ase)|*.ase|(*.ma)|*.ma||", g_pParentWnd );
+	CFileDialog dlgFile(FALSE, "lwo, ase", NULL, 0, "(*.lwo)|*.lwo|(*.ase)|*.ase|(*.ma)|*.ma||", g_pParentWnd);
 
-	if ( dlgFile.DoModal() == IDOK ) {
+	if (dlgFile.DoModal() == IDOK) {
 		idMapEntity *mapEnt;
 		idMapPrimitive *p;
 		idStr name;
 
-		name = fileSystem->OSPathToRelativePath( dlgFile.GetPathName() );
+		name = fileSystem->OSPathToRelativePath(dlgFile.GetPathName());
 		name.BackSlashesToSlashes();
 
 		mapEnt = new idMapEntity();
-		mapEnt->epairs.Set( "name", name.c_str() );
+		mapEnt->epairs.Set("name", name.c_str());
 
-		for ( brush_t *b = selected_brushes.next; b != &selected_brushes; b = b->next ) {
+		for (brush_t *b = selected_brushes.next; b != &selected_brushes; b = b->next) {
 
-			if ( b->hiddenBrush ) {
+			if (b->hiddenBrush) {
 				continue;
 			}
 
-			if ( FilterBrush( b ) ) {
+			if (FilterBrush(b)) {
 				continue;
 			}
 
-			p = BrushToMapPrimitive( b, b->owner->origin );
-			if ( p ) {
-				mapEnt->AddPrimitive( p );
+			p = BrushToMapPrimitive(b, b->owner->origin);
+			if (p) {
+				mapEnt->AddPrimitive(p);
 			}
 		}
 
-		collisionModelManager->WriteCollisionModelForMapEntity( mapEnt, name.c_str() );
+		collisionModelManager->WriteCollisionModelForMapEntity(mapEnt, name.c_str());
 
 		delete mapEnt;
 	}
@@ -1563,7 +1297,7 @@ Builds models, lightdefs, and modeldefs for the current editor data
 so it can be rendered by the game renderSystem
 =================
 */
-void CCamWnd::BuildRendererState() {
+void RenderPreview::BuildRendererState() {
 	renderEntity_t	worldEntity;
 	entity_t	*ent;
 	brush_t		*brush;
@@ -1571,7 +1305,7 @@ void CCamWnd::BuildRendererState() {
 	FreeRendererState();
 
 	// the renderWorld holds all the references and defs
-	g_qeglobals.rw->InitFromMap( NULL );
+	g_qeglobals.rw->InitFromMap(NULL);
 
 	// create the raw model for all the brushes
 	int numBrushes = 0;
@@ -1579,14 +1313,14 @@ void CCamWnd::BuildRendererState() {
 
 	// the renderModel for the world holds all the geometry that isn't in an entity
 	worldModel = renderModelManager->AllocModel();
-	worldModel->InitEmpty( "EditorWorldModel" );
+	worldModel->InitEmpty("EditorWorldModel");
 
-	for ( brush_t *brushList = &active_brushes ; brushList ;
-		brushList = (brushList == &active_brushes) ? &selected_brushes : NULL ) {
+	for (brush_t *brushList = &active_brushes; brushList;
+		brushList = (brushList == &active_brushes) ? &selected_brushes : NULL) {
 
 		for (brush = brushList->next; brush != brushList; brush = brush->next) {
 
-			if ( brush->hiddenBrush ) {
+			if (brush->hiddenBrush) {
 				continue;
 			}
 
@@ -1602,15 +1336,15 @@ void CCamWnd::BuildRendererState() {
 			idMatList mats(1024);
 
 			if (!IsBModel(brush)) {
-				numSurfaces += Brush_ToTris( brush, &tris, &mats, false, false );
+				numSurfaces += Brush_ToTris(brush, &tris, &mats, false, false);
 			}
 
 			// add the surfaces to the renderModel
 			modelSurface_t	surf;
-			for ( int i = 0 ; i < tris.Num() ; i++ ) {
+			for (int i = 0; i < tris.Num(); i++) {
 				surf.geometry = tris[i];
 				surf.shader = mats[i];
-				worldModel->AddSurface( surf );
+				worldModel->AddSurface(surf);
 			}
 
 			numBrushes++;
@@ -1621,7 +1355,7 @@ void CCamWnd::BuildRendererState() {
 	worldModel->FinishSurfaces();
 
 	// the worldEntity just has the handle for the worldModel
-	memset( &worldEntity, 0, sizeof( worldEntity ) );
+	memset(&worldEntity, 0, sizeof(worldEntity));
 	worldEntity.hModel = worldModel;
 	worldEntity.axis = mat3_default;
 	worldEntity.shaderParms[0] = 1;
@@ -1629,11 +1363,11 @@ void CCamWnd::BuildRendererState() {
 	worldEntity.shaderParms[2] = 1;
 	worldEntity.shaderParms[3] = 1;
 
-	worldModelDef = g_qeglobals.rw->AddEntityDef( &worldEntity );
+	worldModelDef = g_qeglobals.rw->AddEntityDef(&worldEntity);
 
 	// create the light and model entities exactly the way the game code would
-	for ( ent = entities.next ; ent != &entities ; ent = ent->next ) {
-		if ( ent->brushes.onext == &ent->brushes ) {
+	for (ent = entities.next; ent != &entities; ent = ent->next) {
+		if (ent->brushes.onext == &ent->brushes) {
 			continue;
 		}
 
@@ -1645,7 +1379,7 @@ void CCamWnd::BuildRendererState() {
 			continue;
 		}
 
-		BuildEntityRenderState( ent, false );
+		BuildEntityRenderState(ent, false);
 	}
 
 	//common->Printf("Render data used %d brushes\n", numBrushes);
@@ -1655,38 +1389,38 @@ void CCamWnd::BuildRendererState() {
 
 /*
 ============================
-CCamWnd::FreeRendererState
+RenderPreview::FreeRendererState
 
   Frees the render state data
 ============================
 */
-void CCamWnd::FreeRendererState() {
+void RenderPreview::FreeRendererState() {
 
-	for ( entity_t *ent = entities.next ; ent != &entities ; ent = ent->next ) {
+	for (entity_t *ent = entities.next; ent != &entities; ent = ent->next) {
 		if (ent->lightDef >= 0) {
-			g_qeglobals.rw->FreeLightDef( ent->lightDef );
+			g_qeglobals.rw->FreeLightDef(ent->lightDef);
 			ent->lightDef = -1;
 		}
 
 		if (ent->modelDef >= 0) {
-			renderEntity_t *refent = const_cast<renderEntity_t *>(g_qeglobals.rw->GetRenderEntity( ent->modelDef ));
-			if ( refent ) {
-				if ( refent->callbackData ) {
-					Mem_Free( refent->callbackData );
+			renderEntity_t *refent = const_cast<renderEntity_t *>(g_qeglobals.rw->GetRenderEntity(ent->modelDef));
+			if (refent) {
+				if (refent->callbackData) {
+					Mem_Free(refent->callbackData);
 					refent->callbackData = NULL;
 				}
-				if ( refent->joints ) {
+				if (refent->joints) {
 					Mem_Free16(refent->joints);
 					refent->joints = NULL;
 				}
 			}
-			g_qeglobals.rw->FreeEntityDef( ent->modelDef );
+			g_qeglobals.rw->FreeEntityDef(ent->modelDef);
 			ent->modelDef = -1;
 		}
 	}
 
-	if ( worldModel ) {
-		renderModelManager->FreeModel( worldModel );
+	if (worldModel) {
+		renderModelManager->FreeModel(worldModel);
 		worldModel = NULL;
 	}
 
@@ -1695,12 +1429,12 @@ void CCamWnd::FreeRendererState() {
 
 /*
 ========================
-CCamWnd::UpdateCaption
+RenderPreview::UpdateCaption
 
   updates the caption based on rendermode and whether the render mode needs updated
 ========================
 */
-void CCamWnd::UpdateCaption() {
+void RenderPreview::UpdateCaption() {
 
 	idStr strCaption;
 
@@ -1716,41 +1450,41 @@ void CCamWnd::UpdateCaption() {
 		strCaption += (animationMode) ? " +anim" : "";
 	}
 	strCaption += (soundMode) ? " +snd" : "";
-	SetWindowText(strCaption);
+	this->setWindowTitle(strCaption.c_str());	
 }
 
 /*
 ===========================
-CCamWnd::ToggleRenderMode
+RenderPreview::ToggleRenderMode
 
 	Toggles the render mode
 ===========================
 */
-void CCamWnd::ToggleRenderMode() {
+void RenderPreview::ToggleRenderMode() {
 	renderMode ^= 1;
 	UpdateCaption();
 }
 
 /*
 ===========================
-CCamWnd::ToggleRebuildMode
+RenderPreview::ToggleRebuildMode
 
 	Toggles the rebuild mode
 ===========================
 */
-void CCamWnd::ToggleRebuildMode() {
+void RenderPreview::ToggleRebuildMode() {
 	rebuildMode ^= 1;
 	UpdateCaption();
 }
 
 /*
 ===========================
-CCamWnd::ToggleEntityMode
+RenderPreview::ToggleEntityMode
 
 	Toggles the entity mode
 ===========================
 */
-void CCamWnd::ToggleEntityMode() {
+void RenderPreview::ToggleEntityMode() {
 	entityMode ^= 1;
 	UpdateCaption();
 }
@@ -1758,58 +1492,59 @@ void CCamWnd::ToggleEntityMode() {
 
 /*
 ===========================
-CCamWnd::ToggleRenderMode
+RenderPreview::ToggleRenderMode
 
 	Toggles the render mode
 ===========================
 */
-void CCamWnd::ToggleAnimationMode() {
+void RenderPreview::ToggleAnimationMode() {
 	animationMode ^= 1;
-	if (animationMode)  {
-		SetTimer(0, 10, NULL);
-	} else {
-		KillTimer(0);
+	if (animationMode) {
+		//SetTimer(0, 10, NULL); //FIXME
+	}
+	else {
+		//KillTimer(0); //FIXME
 	}
 	UpdateCaption();
 }
 
 /*
 ===========================
-CCamWnd::ToggleSoundMode
+RenderPreview::ToggleSoundMode
 
 	Toggles the sound mode
 ===========================
 */
-void CCamWnd::ToggleSoundMode() {
+void RenderPreview::ToggleSoundMode() {
 	soundMode ^= 1;
 
 	UpdateCaption();
 
-	for ( entity_t *ent = entities.next ; ent != &entities ; ent = ent->next ) {
+	for (entity_t *ent = entities.next; ent != &entities; ent = ent->next) {
 		ent->UpdateSoundEmitter();
 	}
 }
 
 /*
 ===========================
-CCamWnd::ToggleRenderMode
+RenderPreview::ToggleRenderMode
 
 	Toggles the render mode
 ===========================
 */
-void CCamWnd::ToggleSelectMode() {
+void RenderPreview::ToggleSelectMode() {
 	selectMode ^= 1;
 	UpdateCaption();
 }
 
 /*
 =========================
-CCamWnd::MarkWorldDirty
+RenderPreview::MarkWorldDirty
 
   marks the render world as dirty
 =========================
 */
-void CCamWnd::MarkWorldDirty() {
+void RenderPreview::MarkWorldDirty() {
 	worldDirty = true;
 	UpdateCaption();
 }
@@ -1817,18 +1552,18 @@ void CCamWnd::MarkWorldDirty() {
 
 /*
  =======================================================================================================================
-    Cam_Render
+	Cam_Render
 
 	This used the renderSystem to draw a fully lit view of the world
  =======================================================================================================================
  */
-void CCamWnd::Cam_Render() {
+void RenderPreview::Cam_Render() {
 	if (!active_brushes.next) {
 		return;					// not valid yet
 	}
 
 	// create the model, using explicit normals
-	if ( rebuildMode && worldDirty ) {
+	if (rebuildMode && worldDirty) {
 		BuildRendererState();
 	}
 
@@ -1841,14 +1576,14 @@ void CCamWnd::Cam_Render() {
 	glConfig.windowHeight = m_Camera.height;
 
 	// render it
-	renderSystem->BeginFrame( m_Camera.width, m_Camera.height );
+	renderSystem->BeginFrame(m_Camera.width, m_Camera.height);
 
 	renderView_t refdef;
-	memset( &refdef, 0, sizeof( refdef ) );
+	memset(&refdef, 0, sizeof(refdef));
 	refdef.vieworg = m_Camera.origin;
 
 	// the editor uses opposite pitch convention
-	refdef.viewaxis = idAngles( -m_Camera.angles.pitch, m_Camera.angles.yaw, m_Camera.angles.roll ).ToMat3();
+	refdef.viewaxis = idAngles(-m_Camera.angles.pitch, m_Camera.angles.yaw, m_Camera.angles.roll).ToMat3();
 
 	refdef.width = SCREEN_WIDTH;
 	refdef.height = SCREEN_HEIGHT;
@@ -1860,7 +1595,7 @@ void CCamWnd::Cam_Render() {
 		refdef.time = eventLoop->Milliseconds();
 	}
 
-	g_qeglobals.rw->RenderScene( &refdef );
+	g_qeglobals.rw->RenderScene(&refdef);
 
 	renderSystem->EndFrame();
 
@@ -1872,8 +1607,8 @@ void CCamWnd::Cam_Render() {
 	glConfig.vidHeight = oldVidHeight;
 }
 
-
-void CCamWnd::OnTimer(UINT nIDEvent)
+#if 0 //FIXME
+void RenderPreview::OnTimer(UINT nIDEvent)
 {
 	if ((renderMode && animationMode) || nIDEvent == 1) {
 		Sys_UpdateWindows(W_CAMERA);
@@ -1882,13 +1617,13 @@ void CCamWnd::OnTimer(UINT nIDEvent)
 		KillTimer(1);
 	}
 
-	if (!animationMode ) {
+	if (!animationMode) {
 		KillTimer(0);
 	}
 }
+#endif
 
-
-void CCamWnd::UpdateCameraView() {
+void RenderPreview::UpdateCameraView() {
 	if (QE_SingleBrush(true, true)) {
 		brush_t *b = selected_brushes.next;
 		if (b->owner->eclass->nShowFlags & ECLASS_CAMERAVIEW) {
@@ -1906,9 +1641,9 @@ void CCamWnd::UpdateCameraView() {
 				idAngles ang = v.ToMat3().ToAngles();
 				ang.pitch = -ang.pitch;
 				ang.roll = 0.0f;
-                SetView( ent->origin, ang );
+				SetView(ent->origin, ang);
 				Cam_BuildMatrix();
-				Sys_UpdateWindows( W_CAMERA );
+				Sys_UpdateWindows(W_CAMERA);
 				return;
 			}
 		}
