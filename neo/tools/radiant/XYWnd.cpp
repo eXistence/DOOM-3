@@ -2004,7 +2004,7 @@ void CXYWnd::XY_MouseDown(int x, int y, int buttons) {
 
 	idVec3 origin = point;
 
-	const auto cameraOrigin = g_pParentWnd->GetCamera()->GetOrigin();
+	const auto cameraOrigin = g_pParentWnd->GetCamera().GetOrigin();
 
 	dir.Zero();
 	if (m_nViewType == ViewType::XY) {
@@ -2084,7 +2084,7 @@ void CXYWnd::XY_MouseDown(int x, int y, int buttons) {
 
 	// control mbutton = move camera
 	if (m_nButtonstate == (MK_CONTROL | nMouseButton)) {
-		VectorCopyXY(point, g_pParentWnd->GetCamera()->Camera().origin);
+		g_pParentWnd->GetCamera().SetOriginXY(point);
 		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
 	}
 
@@ -2094,13 +2094,13 @@ void CXYWnd::XY_MouseDown(int x, int y, int buttons) {
 		(g_PrefsDlg.m_nMouseButtons == 3 && m_nButtonstate == MK_MBUTTON) ||
 		(g_PrefsDlg.m_nMouseButtons == 2 && m_nButtonstate == (MK_SHIFT | MK_CONTROL | MK_RBUTTON))
 	) {
-		VectorSubtract(point, g_pParentWnd->GetCamera()->Camera().origin, point);
+		point = point - g_pParentWnd->GetCamera().GetOrigin();
 
 		int n1 = (m_nViewType == ViewType::XY) ? 1 : 2;
 		int n2 = (m_nViewType == ViewType::YZ) ? 1 : 0;
-		int nAngle = (m_nViewType == ViewType::XY) ? YAW : PITCH;
+		CameraAngle nAngle = (m_nViewType == ViewType::XY) ? YAW : PITCH;
 		if (point[n1] || point[n2]) {
-			g_pParentWnd->GetCamera()->Camera().angles[nAngle] = RAD2DEG( atan2(point[n1], point[n2]) );
+			g_pParentWnd->GetCamera().SetAngle(nAngle, RAD2DEG( atan2(point[n1], point[n2]) ));
 			Sys_UpdateWindows(W_CAMERA_IFON | W_XY_OVERLAY);
 		}
 	}
@@ -2292,7 +2292,7 @@ bool CXYWnd::XY_MouseMoved(int x, int y, int buttons) {
 	// control mbutton = move camera
 	if (m_nButtonstate == (MK_CONTROL | nMouseButton)) {
 		SnapToPoint(x, y, point);
-		VectorCopyXY(point, g_pParentWnd->GetCamera()->Camera().origin);
+		g_pParentWnd->GetCamera().SetOriginXY(point);
 		Sys_UpdateWindows(W_XY_OVERLAY | W_CAMERA);
 		return false;
 	}
@@ -2336,13 +2336,13 @@ bool CXYWnd::XY_MouseMoved(int x, int y, int buttons) {
 		(g_PrefsDlg.m_nMouseButtons == 2 && m_nButtonstate == (MK_SHIFT | MK_CONTROL | MK_RBUTTON))
 	) {
 		SnapToPoint(x, y, point);
-		VectorSubtract(point, g_pParentWnd->GetCamera()->Camera().origin, point);
+		point = point - g_pParentWnd->GetCamera().GetOrigin();
 
 		int n1 = (m_nViewType == ViewType::XY) ? 1 : 2;
 		int n2 = (m_nViewType == ViewType::YZ) ? 1 : 0;
-		int nAngle = (m_nViewType == ViewType::XY) ? YAW : PITCH;
+		CameraAngle nAngle = (m_nViewType == ViewType::XY) ? YAW : PITCH;
 		if (point[n1] || point[n2]) {
-			g_pParentWnd->GetCamera()->Camera().angles[nAngle] = RAD2DEG( atan2(point[n1], point[n2]) );
+			g_pParentWnd->GetCamera().SetAngle(nAngle, RAD2DEG( atan2(point[n1], point[n2]) ));
 			Sys_UpdateWindows(W_CAMERA_IFON | W_XY_OVERLAY);
 		}
 
@@ -2708,19 +2708,19 @@ void CXYWnd::DrawCameraIcon() {
 	float	x, y, a;
 
 	if (m_nViewType == ViewType::XY) {
-		x = g_pParentWnd->GetCamera()->Camera().origin[0];
-		y = g_pParentWnd->GetCamera()->Camera().origin[1];
-		a = g_pParentWnd->GetCamera()->Camera().angles[YAW] * idMath::M_DEG2RAD;
+		x = g_pParentWnd->GetCamera().GetOrigin()[0];
+		y = g_pParentWnd->GetCamera().GetOrigin()[1];
+		a = g_pParentWnd->GetCamera().GetAngles()[YAW] * idMath::M_DEG2RAD;
 	}
 	else if (m_nViewType == ViewType::YZ) {
-		x = g_pParentWnd->GetCamera()->Camera().origin[1];
-		y = g_pParentWnd->GetCamera()->Camera().origin[2];
-		a = g_pParentWnd->GetCamera()->Camera().angles[PITCH] * idMath::M_DEG2RAD;
+		x = g_pParentWnd->GetCamera().GetOrigin()[1];
+		y = g_pParentWnd->GetCamera().GetOrigin()[2];
+		a = g_pParentWnd->GetCamera().GetAngles()[PITCH] * idMath::M_DEG2RAD;
 	}
 	else {
-		x = g_pParentWnd->GetCamera()->Camera().origin[0];
-		y = g_pParentWnd->GetCamera()->Camera().origin[2];
-		a = g_pParentWnd->GetCamera()->Camera().angles[PITCH] * idMath::M_DEG2RAD;
+		x = g_pParentWnd->GetCamera().GetOrigin()[0];
+		y = g_pParentWnd->GetCamera().GetOrigin()[2];
+		a = g_pParentWnd->GetCamera().GetAngles()[PITCH] * idMath::M_DEG2RAD;
 	}
 
 	float scale = 1.0/m_fScale;	//jhefty - keep the camera icon proportionally the same size
@@ -3556,8 +3556,8 @@ void CXYWnd::PositionView() {
 		m_vOrigin[nDim2] = b->mins[nDim2];
 	}
 	else {
-		m_vOrigin[nDim1] = g_pParentWnd->GetCamera()->Camera().origin[nDim1];
-		m_vOrigin[nDim2] = g_pParentWnd->GetCamera()->Camera().origin[nDim2];
+		m_vOrigin[nDim1] = g_pParentWnd->GetCamera().GetOrigin()[nDim1];
+		m_vOrigin[nDim2] = g_pParentWnd->GetCamera().GetOrigin()[nDim2];
 	}
 }
 

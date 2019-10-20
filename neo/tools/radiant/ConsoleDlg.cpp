@@ -118,7 +118,7 @@ BOOL CConsoleDlg::PreTranslateMessage(MSG* pMsg)
 
 		if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE ) {
 			if (pMsg->wParam == VK_ESCAPE) {
-				g_pParentWnd->GetCamera()->SetFocus();
+				g_pParentWnd->GetCameraWindow()->SetFocus();
 				Select_Deselect();
 			}
 

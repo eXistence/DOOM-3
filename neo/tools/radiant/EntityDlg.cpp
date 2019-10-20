@@ -531,7 +531,7 @@ BOOL CEntityDlg::PreTranslateMessage(MSG* pMsg)
 
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE) {
 		if (pMsg->wParam == VK_ESCAPE) {
-			g_pParentWnd->GetCamera()->SetFocus();
+			g_pParentWnd->GetCameraWindow()->SetFocus();
 			Select_Deselect();
 		}
 		return TRUE;
@@ -1067,7 +1067,7 @@ void CEntityDlg::UpdateKeyVal(const char *key, const char *val) {
 	if (editEntity) {
 		editEntity->epairs.Set(key, val);
 		SetKeyValPairs();
-		g_pParentWnd->GetCamera()->BuildEntityRenderState(editEntity, true);
+		g_pParentWnd->GetCameraWindow()->BuildEntityRenderState(editEntity, true);
 		editEntity->UpdateSoundEmitter();
 	}
 }
@@ -1094,7 +1094,7 @@ void CEntityDlg::UpdateFromAnimationFrame ( bool updateKeyValueDisplay )
 		SetKeyValPairs();
 	}
 
-	g_pParentWnd->GetCamera ()->BuildEntityRenderState (editEntity , true );
+	g_pParentWnd->GetCameraWindow ()->BuildEntityRenderState (editEntity , true );
 	Sys_UpdateWindows ( W_ALL );
 
 }

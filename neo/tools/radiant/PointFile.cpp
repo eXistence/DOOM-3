@@ -48,46 +48,56 @@ void Pointfile_Delete (void)
 	remove(name);
 }
 
+static void Pointfile_NextPrev(int i)
+{
+	if (i == 0) {
+		return;
+	}
+	if (i > 0)
+	{
+		if (s_check_point >= s_num_points - 2)
+		{
+			Sys_Status("End of pointfile", 0);
+			return;
+		}
+		s_check_point++;
+	}
+
+	if (i < 0)
+	{
+		if (s_check_point == 0)
+		{
+			Sys_Status("Start of pointfile", 0);
+			return;
+		}
+		s_check_point--;
+	}
+	
+
+	const idVec3 cameraOrigin = s_pointvecs[s_check_point];
+
+	g_pParentWnd->GetCamera().SetOrigin(cameraOrigin);
+	g_pParentWnd->GetXYWnd()->GetOrigin() = cameraOrigin;
+
+	const idVec3 dir = (s_pointvecs[s_check_point + 1] - cameraOrigin).Normalized();
+
+
+	g_pParentWnd->GetCamera().SetAngle(YAW, atan2(dir[1], dir[0]) * 180 / 3.14159);
+	g_pParentWnd->GetCamera().SetAngle(PITCH, asin(dir[2]) * 180 / 3.14159);
+
+	Sys_UpdateWindows(W_ALL);
+}
+
 // advance camera to next point
 void Pointfile_Next (void)
 {
-	if (s_check_point >= s_num_points-2)
-	{
-		Sys_Status ("End of pointfile", 0);
-		return;
-	}
-	s_check_point++;
-	g_pParentWnd->GetCamera()->Camera().origin = s_pointvecs[s_check_point];
-	g_pParentWnd->GetXYWnd()->GetOrigin() = s_pointvecs[s_check_point];
-
-	idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;
-	dir.Normalize();
-
-	g_pParentWnd->GetCamera()->Camera().angles[1] = atan2 (dir[1], dir[0])*180/3.14159;
-	g_pParentWnd->GetCamera()->Camera().angles[0] = asin (dir[2])*180/3.14159;
-
-	Sys_UpdateWindows (W_ALL);
+	Pointfile_NextPrev(1);
 }
 
 // advance camera to previous point
 void Pointfile_Prev (void)
 {
-	if (s_check_point == 0)
-	{
-		Sys_Status ("Start of pointfile", 0);
-		return;
-	}
-	s_check_point--;
-  g_pParentWnd->GetCamera()->Camera().origin = s_pointvecs[s_check_point];
-  g_pParentWnd->GetXYWnd()->GetOrigin() = s_pointvecs[s_check_point];
-
-  idVec3 dir = s_pointvecs[s_check_point+1] - g_pParentWnd->GetCamera()->Camera().origin;
-	dir.Normalize();
-
-	g_pParentWnd->GetCamera()->Camera().angles[1] = atan2 (dir[1], dir[0])*180/3.14159;
-	g_pParentWnd->GetCamera()->Camera().angles[0] = asin (dir[2])*180/3.14159;
-
-	Sys_UpdateWindows (W_ALL);
+	Pointfile_NextPrev(-1);
 }
 
 void Pointfile_Check (void)
@@ -106,23 +116,20 @@ void Pointfile_Check (void)
 
 	common->Printf ("Reading pointfile %s\n", name);
 
-  s_num_points = 0;
-  do
-  {
-    const int n = fscanf(f, "%f %f %f\n", &v[0], &v[1], &v[2]);
-    if ( n != 3  || s_num_points >= MAX_POINTFILE)
-      break;
+	s_num_points = 0;
+	do
+	{
+		const int n = fscanf(f, "%f %f %f\n", &v[0], &v[1], &v[2]);
+		if (n != 3 || s_num_points >= MAX_POINTFILE)
+			break;
 
-    s_pointvecs[s_num_points] = v;
-    s_num_points++;
+		s_pointvecs[s_num_points] = v;
+		s_num_points++;
 
-  } while (1);
-
-
+	} while (1);
 
 	s_check_point = 0;
 	fclose (f);
-
 }
 
 void Pointfile_Draw( void )

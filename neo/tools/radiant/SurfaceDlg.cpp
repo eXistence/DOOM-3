@@ -446,14 +446,14 @@ void CSurfaceDlg::OnDeltaPosSpin(NMHDR* pNMHDR, LRESULT* pResult) {
 
 void CSurfaceDlg::OnBtnPatchdetails() {
 	Patch_NaturalizeSelected(true);
-	g_pParentWnd->GetCamera()->MarkWorldDirty ();
+	g_pParentWnd->GetCameraWindow()->MarkWorldDirty ();
 	Sys_UpdateWindows(W_ALL);
 }
 
 void CSurfaceDlg::OnBtnPatchnatural() {
 	Select_SetTexture (&g_qeglobals.d_texturewin.texdef, &g_qeglobals.d_texturewin.brushprimit_texdef, false);
 	Patch_NaturalizeSelected();
-	g_pParentWnd->GetCamera()->MarkWorldDirty ();
+	g_pParentWnd->GetCameraWindow()->MarkWorldDirty ();
 	g_changed_surface = true;
 	Sys_UpdateWindows(W_ALL);
 }
@@ -488,7 +488,7 @@ void CSurfaceDlg::OnBtnFacefit() {
 	}
 */
 	Select_FitTexture(m_fHeight, m_fWidth);
-	g_pParentWnd->GetCamera()->MarkWorldDirty ();
+	g_pParentWnd->GetCameraWindow()->MarkWorldDirty ();
 	//SetTexMods();
 	g_changed_surface = true;
 	Sys_UpdateWindows(W_ALL);
@@ -499,7 +499,7 @@ void CSurfaceDlg::OnCheckSubdivide() {
 	UpdateData( TRUE );
 	// turn any patches in explicit subdivides
 	Patch_SubdivideSelected( ( m_subdivide != FALSE ), m_nHorz, m_nVert );
-	g_pParentWnd->GetCamera()->MarkWorldDirty ();
+	g_pParentWnd->GetCameraWindow()->MarkWorldDirty ();
 	Sys_UpdateWindows( W_CAMERA | W_XY );
 }
 

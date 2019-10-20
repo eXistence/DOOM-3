@@ -1845,8 +1845,11 @@ void CMainFrame::OnView100() {
  =======================================================================================================================
  */
 void CMainFrame::OnViewCenter() {
-	m_pCamWnd->Camera().angles[ROLL] = m_pCamWnd->Camera().angles[PITCH] = 0;
-	m_pCamWnd->Camera().angles[YAW] = 22.5 * floor((m_pCamWnd->Camera().angles[YAW] + 11) / 22.5);
+	idAngles angles;
+	angles[ROLL] = 0;
+	angles[PITCH] = 0;
+	angles[YAW] = 22.5 * floor((GetCamera().GetAngles()[YAW] + 11) / 22.5);
+	GetCamera().SetAngles(angles);
 	Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
 }
 
@@ -2622,12 +2625,9 @@ bool FindNextBrush(brush_t* pPrevFoundBrush)	// can be NULL for fresh search
 
 		// got one, jump the camera to it...
 		//
-		g_pParentWnd->GetCamera()->Camera().origin = v3Origin;
-		g_pParentWnd->GetCamera()->Camera().origin[1] -= 32;	// back off a touch to look at it
-
-		g_pParentWnd->GetCamera()->Camera().angles[0] = 0;
-		g_pParentWnd->GetCamera()->Camera().angles[1] = 90;
-		g_pParentWnd->GetCamera()->Camera().angles[2] = 0;
+		v3Origin[1] -= 32; // back off a touch to look at it
+		g_pParentWnd->GetCamera().SetOrigin(v3Origin);
+		g_pParentWnd->GetCamera().SetAngles(0, 90, 0);
 
 		// force main screen into XY camera mode (just in case)...
 		//
@@ -2733,9 +2733,8 @@ void CMainFrame::OnMiscSetViewPos()
 				fYaw = 0;	// jic
 			}
 
-			g_pParentWnd->GetCamera()->Camera().angles[YAW] = fYaw;
-			g_pParentWnd->GetCamera()->Camera().origin = v3Viewpos;
-			g_pParentWnd->GetXYWnd()->GetOrigin() = v3Viewpos;
+			g_pParentWnd->GetCamera().SetYaw(fYaw);
+			g_pParentWnd->GetCamera().SetOrigin(v3Viewpos);
 			Sys_UpdateWindows (W_ALL);
 		}
 		else
@@ -3366,7 +3365,7 @@ void CMainFrame::OnViewClipper() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraAngledown() {
-	m_pCamWnd->TurnCameraUpDown(-SPEED_TURN);
+	GetCamera().TurnCameraUpDown(-SPEED_TURN);
 	Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
 }
 
@@ -3375,7 +3374,7 @@ void CMainFrame::OnCameraAngledown() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraAngleup() {
-	m_pCamWnd->TurnCameraUpDown(SPEED_TURN);
+	GetCamera().TurnCameraUpDown(SPEED_TURN);
 	Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
 }
 
@@ -3384,7 +3383,7 @@ void CMainFrame::OnCameraAngleup() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraBack() {
-	m_pCamWnd->MoveCameraForwardBackward(-SPEED_MOVE);	
+	GetCamera().MoveCameraForwardBackward(-SPEED_MOVE);
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3393,7 +3392,7 @@ void CMainFrame::OnCameraBack() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraDown() {	
-	m_pCamWnd->MoveCameraUpDown(-SPEED_MOVE);	
+	GetCamera().MoveCameraUpDown(-SPEED_MOVE);
 	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 }
 
@@ -3402,7 +3401,7 @@ void CMainFrame::OnCameraDown() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraForward() {
-	m_pCamWnd->MoveCameraForwardBackward(SPEED_MOVE);	
+	GetCamera().MoveCameraForwardBackward(SPEED_MOVE);
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3411,7 +3410,7 @@ void CMainFrame::OnCameraForward() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraLeft() {
-	m_pCamWnd->TurnCameraLeftRight(SPEED_TURN);	
+	GetCamera().TurnCameraLeftRight(SPEED_TURN);
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3420,7 +3419,7 @@ void CMainFrame::OnCameraLeft() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraRight() {
-	m_pCamWnd->TurnCameraLeftRight(-SPEED_TURN);	
+	GetCamera().TurnCameraLeftRight(-SPEED_TURN);
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3429,7 +3428,7 @@ void CMainFrame::OnCameraRight() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraStrafeleft() {
-	m_pCamWnd->MoveCameraLeftRight(-SPEED_MOVE);	
+	GetCamera().MoveCameraLeftRight(-SPEED_MOVE);
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3438,7 +3437,7 @@ void CMainFrame::OnCameraStrafeleft() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraStraferight() {
-	m_pCamWnd->MoveCameraLeftRight(SPEED_MOVE);	
+	GetCamera().MoveCameraLeftRight(SPEED_MOVE);
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
@@ -3447,7 +3446,7 @@ void CMainFrame::OnCameraStraferight() {
  =======================================================================================================================
  */
 void CMainFrame::OnCameraUp() {
-	m_pCamWnd->MoveCameraUpDown(SPEED_MOVE);
+	GetCamera().MoveCameraUpDown(SPEED_MOVE);
 	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 }
 
@@ -6039,9 +6038,15 @@ void CMainFrame::OnSplineTest() {
 
 	while (current < start + msecs) {
 		float	fov;
-		g_splineList->getCameraInfo(current, g_pParentWnd->GetCamera()->Camera().origin, dir, &fov);
-		g_pParentWnd->GetCamera()->Camera().angles[1] = atan2(dir[1], dir[0]) * 180 / 3.14159;
-		g_pParentWnd->GetCamera()->Camera().angles[0] = asin(dir[2]) * 180 / 3.14159;
+		idVec3 origin = g_pParentWnd->GetCamera().GetOrigin();
+		idAngles angles = g_pParentWnd->GetCamera().GetAngles();
+
+		g_splineList->getCameraInfo(current, origin, dir, &fov);
+		angles[1] = atan2(dir[1], dir[0]) * 180 / 3.14159;
+		angles[0] = asin(dir[2]) * 180 / 3.14159;
+
+		g_pParentWnd->GetCamera().SetAngles(angles);
+		g_pParentWnd->GetCamera().SetOrigin(origin);
 		g_pParentWnd->UpdateWindows(W_XY | W_CAMERA);
 		current = GetTickCount();
 	}

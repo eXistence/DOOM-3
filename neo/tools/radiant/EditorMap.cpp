@@ -499,17 +499,20 @@ void Map_LoadFile(const char *filename) {
 	// move the view to a start position
 	ent = AngledEntity();
 
-	g_pParentWnd->GetCamera()->Camera().angles[PITCH] = 0;
+	g_pParentWnd->GetCamera().SetAngle(PITCH, 0);
 
 	if (ent) {
-		ent->GetVectorForKey("origin", g_pParentWnd->GetCamera()->Camera().origin);
+		idVec3 cameraOrigin;
+		ent->GetVectorForKey("origin", cameraOrigin);
+		g_pParentWnd->GetCamera().SetOrigin(cameraOrigin);
+
 		ent->GetVectorForKey("origin", g_pParentWnd->GetXYWnd()->GetOrigin());
-		g_pParentWnd->GetCamera()->Camera().angles[YAW] = ent->FloatForKey("angle");
+		g_pParentWnd->GetCamera().SetAngle(YAW, ent->FloatForKey("angle"));
 	}
 	else {
-		g_pParentWnd->GetCamera()->Camera().angles[YAW] = 0;
-		VectorCopy(vec3_origin, g_pParentWnd->GetCamera()->Camera().origin);
-		VectorCopy(vec3_origin, g_pParentWnd->GetXYWnd()->GetOrigin());
+		g_pParentWnd->GetCamera().SetAngle(YAW, 0);
+		g_pParentWnd->GetCamera().SetOrigin(vec3_origin);
+		g_pParentWnd->GetXYWnd()->GetOrigin() = vec3_origin;
 	}
 
 	Map_RegionOff();
@@ -523,8 +526,8 @@ void Map_LoadFile(const char *filename) {
 
 	Texture_ShowInuse();
 
-	if (g_pParentWnd->GetCamera()->GetRenderMode()) {
-		g_pParentWnd->GetCamera()->BuildRendererState();
+	if (g_pParentWnd->GetCameraWindow()->GetRenderMode()) {
+		g_pParentWnd->GetCameraWindow()->BuildRendererState();
 	}
 
 	Sys_EndWait();
@@ -693,10 +696,10 @@ bool Map_SaveFile(const char *filename, bool use_region, bool autosave) {
 	if ( use_region ) {
 		idStr buf;
 		sprintf( buf, "{\n\"classname\"    \"info_player_start\"\n\"origin\"\t \"%i %i %i\"\n\"angle\"\t \"%i\"\n}\n",
-					(int)g_pParentWnd->GetCamera()->Camera().origin[0],
-					(int)g_pParentWnd->GetCamera()->Camera().origin[1],
-					(int)g_pParentWnd->GetCamera()->Camera().origin[2],
-					(int)g_pParentWnd->GetCamera()->Camera().angles[YAW] );
+					(int)g_pParentWnd->GetCamera().GetOrigin()[0],
+					(int)g_pParentWnd->GetCamera().GetOrigin()[1],
+					(int)g_pParentWnd->GetCamera().GetOrigin()[2],
+					(int)g_pParentWnd->GetCamera().GetAngles()[YAW] );
 		idLexer src( LEXFL_NOSTRINGCONCAT | LEXFL_NOSTRINGESCAPECHARS | LEXFL_ALLOWPATHNAMES );
 		src.LoadMemory( buf, buf.Length(), "regionbuf" );
 		idMapEntity *playerstart = idMapEntity::Parse( src );
@@ -781,11 +784,10 @@ void Map_New(void) {
 	world_entity->SetKeyValue("classname", "worldspawn");
 	world_entity->eclass = Eclass_ForName("worldspawn", true);
 
-	g_pParentWnd->GetCamera()->Camera().angles[YAW] = 0;
-	g_pParentWnd->GetCamera()->Camera().angles[PITCH] = 0;
-	VectorCopy(vec3_origin, g_pParentWnd->GetCamera()->Camera().origin);
-	g_pParentWnd->GetCamera()->Camera().origin[2] = 48;
-	VectorCopy(vec3_origin, g_pParentWnd->GetXYWnd()->GetOrigin());
+	g_pParentWnd->GetCamera().SetAngle(YAW, 0);
+	g_pParentWnd->GetCamera().SetAngle(PITCH, 0);
+	g_pParentWnd->GetCamera().SetOrigin(0, 0, 48);
+	g_pParentWnd->GetXYWnd()->GetOrigin() = idVec3(0, 0, 0);
 
 	Map_RestoreBetween();
 
@@ -823,7 +825,7 @@ void AddRegionBrushes(void) {
 	// strcpy (td.name, "REGION");
 	td.SetName("textures/REGION");
 
-const int REGION_WIDTH = 1024;
+	const int REGION_WIDTH = 1024;
 
 
 	mins[0] = region_mins[0] - REGION_WIDTH;

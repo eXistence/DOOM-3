@@ -273,7 +273,7 @@ singleselect:
                 UpdateLightInspector();
 			}
 			if (e->eclass->nShowFlags & ECLASS_CAMERAVIEW) {
-				g_pParentWnd->GetCamera()->UpdateCameraView();
+				g_pParentWnd->GetCameraWindow()->UpdateCameraView();
 			}
 		}
 	}
@@ -457,7 +457,7 @@ void Select_Deselect(bool bDeselectFaces) {
 	active_brushes.next = selected_brushes.next;
 	selected_brushes.prev = selected_brushes.next = &selected_brushes;
 
-	g_pParentWnd->GetCamera()->UpdateCameraView();
+	g_pParentWnd->GetCameraWindow()->UpdateCameraView();
 
 	Sys_UpdateWindows(W_ALL);
 }
@@ -492,7 +492,7 @@ void Select_Move(idVec3 delta, bool bSnap) {
 	CString strStatus;
 	strStatus.Format("Origin X:: %.1f  Y:: %.1f  Z:: %.1f", vMin[0], vMax[1], vMax[2]);
 	g_pParentWnd->SetStatusText(2, strStatus);
-	g_pParentWnd->GetCamera()->UpdateCameraView();
+	g_pParentWnd->GetCameraWindow()->UpdateCameraView();
 
 	// Sys_UpdateWindows (W_ALL);
 }

@@ -119,7 +119,10 @@ public:
 	CXYWnd* GetXYWnd() {return m_pXYWnd;};
 	CXYWnd* GetXZWnd() {return m_pXZWnd;};
 	CXYWnd* GetYZWnd() {return m_pYZWnd;};
-	CCamWnd* GetCamera() {return m_pCamWnd;};
+	CCamWnd* GetCameraWindow() {return m_pCamWnd;};
+	RenderCamera& GetCamera() {
+		return m_pCamWnd->Camera();
+	}
 	CZWnd* GetZWnd()	 {return m_pZWnd;};
 
 	void SetActiveXY(CXYWnd* p)

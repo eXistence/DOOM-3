@@ -51,10 +51,6 @@ If you have questions concerning this license or the applicable additional terms
 #define	CMD_TEXTUREWAD	60000
 #define	CMD_BSPCOMMAND	61000
 
-#define	PITCH	0
-#define	YAW		1
-#define	ROLL	2
-
 #define QE_TIMER0   1
 #define QE_TIMER1   2
 

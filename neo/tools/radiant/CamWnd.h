@@ -34,13 +34,144 @@ enum class CameraDrawMode {
 };
 
 class RenderCamera {
-	friend class CCamWnd;
 public:
+	//strafing forward/backward. positive distance is forward, negative distance is backward
+	void MoveCameraForwardBackward(float distance) {
+		origin = origin + forward * distance;
+	}
+
+	//strafing left/right. Negative distance is left, positive distance is right
+	void MoveCameraLeftRight(float distance) {
+		origin = origin + right * distance;		
+	}
+
+	void MoveCameraUpDown(float distance) {
+		origin[2] += distance;
+	}
+
+	void TurnCameraUpDown(float degree) {
+		angles[PITCH] = idMath::ClampFloat(-85, 85, angles[PITCH] + degree);
+	}
+
+	void TurnCameraLeftRight(float degree) {
+		angles[YAW] += degree;
+	}
+
+	const idVec3& GetOrigin() const {
+		return origin;
+	}
+
+	void SetOrigin(idVec3 origin) {
+		this->origin = origin;
+	}
+
+	void SetOriginXY(idVec3 origin) {
+		this->origin.x = origin.x;
+		this->origin.y = origin.y;
+	}
+
+	void SetOrigin(float x, float y, float z) {
+		origin = idVec3(x, y, z);
+	}
+
+	void SetOrigin(int axis, float value) {
+		assert(axis >= 0 && axis <= 2);
+		origin[axis] = value;
+	}
+
+	CameraDrawMode GetDrawMode() const {
+		return drawMode;
+	}
+
+	void SetDrawMode(CameraDrawMode mode) {
+		drawMode = mode;
+	}
+
+	idAngles GetAngles() const {
+		return angles;
+	}
+
+	void SetAngles(idAngles angles) {
+		this->angles = angles;
+	}
+
+	void SetAngles(float pitch, float yaw, float roll) {
+		angles.pitch = pitch;
+		angles.yaw = yaw;
+		angles.roll = roll;
+	}
+
+	void SetAngle(CameraAngle angle, float value) {
+		angles[(int)angle] = value;
+	}
+
+	void SetPitch(float pitch) {
+		angles.pitch = pitch;		
+	}
+
+	void SetYaw(float yaw) {
+		angles.yaw = yaw;
+	}
+
+	idVec3 GetViewRight() const {
+		return vright;
+	}
+
+	idVec3 GetViewUp() const {
+		return vup;
+	}
+
+	idVec3 GetViewPn() const {
+		return vpn;
+	}
+
+
+	void BuildMatrix(bool renderMode, const float matrix[4][4]) {
+
+		const float xa = (renderMode ? -angles[PITCH] : angles[PITCH]) * idMath::M_DEG2RAD;
+		const float ya = angles[YAW] * idMath::M_DEG2RAD;
+
+		// the movement matrix is kept 2d
+		forward[0] = cos(ya);
+		forward[1] = sin(ya);
+		right[0] = forward[1];
+		right[1] = -forward[0];
+
+		for (int i = 0; i < 3; i++) {
+			vright[i] = matrix[i][0];
+			vup[i] = matrix[i][1];
+			vpn[i] = matrix[i][2];
+		}
+
+		vright.Normalize();
+		vup.Normalize();
+		vpn.Normalize();
+	}
+
+	// (r,u) is a point on the cameras projection plane.
+	// r is horizontal coordinate (-1 left, +1 right)
+	// u is vertical coordinate (-1 bottom, +1 up)
+	idVec3 GetRayFromPoint(float r, float u) const {
+		// calc ray direction
+
+		const float f = 1;
+
+		idVec3	dir;
+		for (int i = 0; i < 3; i++) {
+			dir[i] = vpn[i] * f + vright[i] * r + vup[i] * u;
+		}
+		
+		return dir.Normalized();
+	}
+
+	int			width, height;
+	
+private:
 
 	idVec3		origin;
 	idAngles	angles;
-private:
-	int			width, height;
+
+	
 
 	idVec3		vup, vpn, vright;	// view matrix
 	idVec3		forward, right;	// move matrix
@@ -94,51 +225,11 @@ public:
 	bool GetSoundMode() {
 		return soundMode;
 	}
-	CameraDrawMode GetDrawMode() const {
-		return m_Camera.drawMode;
-	}
-	void SetDrawMode(CameraDrawMode mode) {
-		m_Camera.drawMode = mode;
-	}
-
-	//strafing forward/backward. positive distance is forward, negative distance is backward
-	void MoveCameraForwardBackward(float distance) {
-		VectorMA(m_Camera.origin, distance, m_Camera.forward, m_Camera.origin);
-	}
-
-	//strafing left/right. Negative distance is left, positive distance is right
-	void MoveCameraLeftRight(float distance) {
-		VectorMA(m_Camera.origin, distance, m_Camera.right, m_Camera.origin);
-	}
-
-	void MoveCameraUpDown(float distance) {
-		m_Camera.origin[2] += distance;		
-	}
-
-	void TurnCameraUpDown(float degree) {		
-		m_Camera.angles[0] = idMath::ClampFloat(-85, 85, m_Camera.angles[0] + degree);
-	}
-
-	void TurnCameraLeftRight(float degree) {
-		m_Camera.angles[1] += degree;		
-	}
-
-	const idVec3& GetOrigin() const {
-		return m_Camera.origin;
-	}
-
-	void SetOrigin(idVec3 origin) {
-		m_Camera.origin = origin;
-	}
 
 	void MarkWorldDirty();
 
 private:
 	void SetProjectionMatrix();
-	void SetView(const idVec3 &origin, const idAngles &angles) {
-		m_Camera.origin = origin;
-		m_Camera.angles = angles;
-	}
 	
 	void Cam_BuildMatrix();
 	void Cam_PositionDrag();

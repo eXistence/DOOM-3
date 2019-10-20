@@ -1198,7 +1198,7 @@ void entity_t::UpdateSoundEmitter() {
 
 	// if an entity doesn't have any brushes at all, don't do anything
 	// if the brush isn't displayed (filtered or culled), don't do anything
-	if ( g_pParentWnd->GetCamera()->GetSoundMode()
+	if ( g_pParentWnd->GetCameraWindow()->GetSoundMode()
 		&& this->brushes.onext != &this->brushes && !FilterBrush(this->brushes.onext) ) {
 		// check for sounds
 		const char *v = ValueForKey( "s_shader" );

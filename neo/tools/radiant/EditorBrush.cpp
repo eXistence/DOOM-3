@@ -53,7 +53,7 @@ DrawRenderModel
 ================
 */
 void DrawRenderModel( idRenderModel *model, const idVec3 &origin, const idMat3 &axis, bool cameraView, const idVec3& color ) {
-	const CameraDrawMode nDrawMode = g_pParentWnd->GetCamera()->GetDrawMode();
+	const CameraDrawMode nDrawMode = g_pParentWnd->GetCamera().GetDrawMode();
 	const idMat4 modelView = idMat4(axis, origin).Transpose();
 
 	GL_ModelViewMatrix.Push();
@@ -404,7 +404,7 @@ void Face_SetColor(brush_t *b, face_t *f, float fCurveColor) {
 
 	// set shading for face
 	shade = ShadeForNormal( f->plane.Normal() );
-	if (g_pParentWnd->GetCamera()->GetDrawMode() == CameraDrawMode::Textures && (b->owner && !b->owner->eclass->fixedsize)) {
+	if (g_pParentWnd->GetCamera().GetDrawMode() == CameraDrawMode::Textures && (b->owner && !b->owner->eclass->fixedsize)) {
 		// if (b->curveBrush) shade = fCurveColor;
 		f->d_color[0] = f->d_color[1] = f->d_color[2] = shade;
 	}
@@ -766,7 +766,7 @@ void Brush_Build(brush_t *b, bool bSnap, bool bMarkMap, bool bConvert, bool upda
 
 	if (bMarkMap) {
 		Sys_MarkMapModified();
-		g_pParentWnd->GetCamera()->MarkWorldDirty();
+		g_pParentWnd->GetCameraWindow()->MarkWorldDirty();
 	}
 
 	if (bLocalConvert) {
@@ -2933,7 +2933,7 @@ static void Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset) {
 	if (!(b->owner->eclass->nShowFlags & ECLASS_LIGHT)) {
 		if (b->modelHandle) {
 			g_bScreenUpdates = false;
-			g_pParentWnd->GetCamera()->BuildEntityRenderState(b->owner, true);
+			g_pParentWnd->GetCameraWindow()->BuildEntityRenderState(b->owner, true);
 			g_bScreenUpdates = true;
 		}
 		return;
@@ -3026,7 +3026,7 @@ static void Brush_UpdateLightPoints(brush_t *b, const idVec3 &offset) {
 	}
 
 	g_bScreenUpdates = false;
-	g_pParentWnd->GetCamera()->BuildEntityRenderState(b->owner, true);
+	g_pParentWnd->GetCameraWindow()->BuildEntityRenderState(b->owner, true);
 	g_bScreenUpdates = true;
 
 }
@@ -3711,7 +3711,7 @@ Brush_DrawModel
 ================
 */
 static void Brush_DrawModel( const brush_t *b, bool camera, bool bSelected ) {
-	const auto nDrawMode = g_pParentWnd->GetCamera()->GetDrawMode();
+	const auto nDrawMode = g_pParentWnd->GetCamera().GetDrawMode();
 
 	if ( camera && g_PrefsDlg.m_nEntityShowState != ENTITY_WIREFRAME && nDrawMode != CameraDrawMode::Wireframe ) {
 		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
@@ -3792,7 +3792,7 @@ static void GLTransformedVertex(float x, float y, float z, idMat3 mat, idVec3 or
 	v *= mat;
 	v += origin;
 
-	idVec3 n = v - g_pParentWnd->GetCamera()->GetOrigin();
+	idVec3 n = v - g_pParentWnd->GetCamera().GetOrigin();
 	float max = n.Length() / maxDist;
 	if (color.x) {
 		color.x = max;
@@ -3865,7 +3865,7 @@ static void Brush_DrawAxis(const brush_t *b) {
 		idBounds bo;
 		bo.FromTransformedBounds(b->modelHandle->Bounds(), b->owner->origin, b->owner->rotation);
 
-		const auto cameraOrigin = g_pParentWnd->GetCamera()->GetOrigin();
+		const auto cameraOrigin = g_pParentWnd->GetCamera().GetOrigin();
 
 		float dist = (cameraOrigin - bo[0]).Length();
 		float dist2 = (cameraOrigin - bo[1]).Length();
@@ -4189,7 +4189,7 @@ void Brush_Draw(const brush_t *b, bool bSelected) {
 			glDisable(GL_BLEND);
 		}
 #else
-	const auto nDrawMode = g_pParentWnd->GetCamera()->GetDrawMode();
+	const auto nDrawMode = g_pParentWnd->GetCamera().GetDrawMode();
     const idMaterial* material = nullptr;
     if (nDrawMode == CameraDrawMode::Textures && !b->forceWireFrame && face->d_texture) {
       material = face->d_texture;

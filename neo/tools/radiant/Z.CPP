@@ -159,7 +159,7 @@ void Z_MouseDown(int x, int y, int buttons) {
 
 	// control mbutton = move camera
 	if ((buttons == (MK_CONTROL | nMouseButton)) || (buttons == (MK_CONTROL | MK_LBUTTON))) {
-		g_pParentWnd->GetCamera()->Camera().origin[2] = org[2];
+		g_pParentWnd->GetCamera().SetOrigin(2, org[2]);
 		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY | W_Z);
 	}
 }
@@ -204,7 +204,7 @@ void Z_MouseMoved(int x, int y, int buttons) {
 	// control mbutton = move camera
 	int nMouseButton = g_PrefsDlg.m_nMouseButtons == 2 ? MK_RBUTTON : MK_MBUTTON;
 	if ((buttons == (MK_CONTROL | nMouseButton)) || (buttons == (MK_CONTROL | MK_LBUTTON))) {
-		g_pParentWnd->GetCamera()->Camera().origin[2] = z.origin[2] + (y - (z.height / 2)) / z.scale;
+		g_pParentWnd->GetCamera().SetOrigin(2, z.origin[2] + (y - (z.height / 2)) / z.scale);
 		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY | W_Z);
 	}
 }
@@ -298,7 +298,7 @@ void ZDrawCameraIcon(void) {
 	int		xCam = z.width / 4;
 
 	x = 0;
-	y = g_pParentWnd->GetCamera()->Camera().origin[2];
+	y = g_pParentWnd->GetCamera().GetOrigin()[2];
 
   fhImmediateMode im;
 	im.Color3f(0.0, 0.0, 1.0);
@@ -314,18 +314,6 @@ void ZDrawCameraIcon(void) {
 	im.Vertex3f(x - xCam, y, 0);
 	im.End();
 }
-
-void ZDrawZClip()
-{
-	float x,y;
-
-	x = 0;
-	y = g_pParentWnd->GetCamera()->Camera().origin[2];
-
-	if (g_pParentWnd->GetZWnd()->m_pZClip)	// should always be the case I think
-		g_pParentWnd->GetZWnd()->m_pZClip->Paint();
-}
-
 
 GLbitfield	glbitClear = GL_COLOR_BUFFER_BIT;	// HACK
 
@@ -482,7 +470,6 @@ void Z_Draw(void) {
 	}
 
 	ZDrawCameraIcon();
-	ZDrawZClip();
 
 	glFinish();
 	QE_CheckOpenGLForErrors();

@@ -38,9 +38,12 @@ If you have questions concerning this license or the applicable additional terms
 */
 
 // angle indexes
-#define	PITCH				0		// up / down
-#define	YAW					1		// left / right
-#define	ROLL				2		// fall over
+
+enum CameraAngle {
+	PITCH = 0, // up / down
+	YAW = 1,   // left / right
+	ROLL = 2   // fall over
+};
 
 class idVec3;
 class idQuat;

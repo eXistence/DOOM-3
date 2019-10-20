@@ -784,20 +784,20 @@ void Texture_SetMode(int iMenu) {
 
 
 	if (!texturing && iMenu == ID_TEXTURES_WIREFRAME) {
-		g_pParentWnd->GetCamera()->SetDrawMode(CameraDrawMode::Wireframe);
+		g_pParentWnd->GetCamera().SetDrawMode(CameraDrawMode::Wireframe);
 		Map_BuildBrushData();
 		Sys_UpdateWindows(W_ALL);
 		return;
 	}
 	else if (!texturing && iMenu == ID_TEXTURES_FLATSHADE) {
-		g_pParentWnd->GetCamera()->SetDrawMode(CameraDrawMode::Solid);
+		g_pParentWnd->GetCamera().SetDrawMode(CameraDrawMode::Solid);
 		Map_BuildBrushData();
 		Sys_UpdateWindows(W_ALL);
 		return;
 	}
 
-	if (g_pParentWnd->GetCamera()->GetDrawMode() != CameraDrawMode::Textures) {
-		g_pParentWnd->GetCamera()->SetDrawMode(CameraDrawMode::Textures);		
+	if (g_pParentWnd->GetCamera().GetDrawMode() != CameraDrawMode::Textures) {
+		g_pParentWnd->GetCamera().SetDrawMode(CameraDrawMode::Textures);		
 		Map_BuildBrushData();
 	}
 
@@ -883,7 +883,7 @@ BOOL CNewTexWnd::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN) {
 		if (pMsg->wParam == VK_ESCAPE) {
-			g_pParentWnd->GetCamera()->SetFocus();
+			g_pParentWnd->GetCameraWindow()->SetFocus();
 			Select_Deselect();
 			return TRUE;
 		}

@@ -2597,7 +2597,7 @@ Patch_DrawCam
 */
 void Patch_DrawCam(patchMesh_t *pm, bool selected) {
 
-	const auto nDrawMode = g_pParentWnd->GetCamera()->GetDrawMode();
+	const auto nDrawMode = g_pParentWnd->GetCamera().GetDrawMode();
 
 	idVec3 color = g_qeglobals.d_savedinfo.colors[COLOR_BRUSHES];
 	if (selected)
