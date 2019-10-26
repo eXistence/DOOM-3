@@ -121,7 +121,7 @@ public:
 	CXYWnd* GetYZWnd() {return m_pYZWnd;};
 	CCamWnd* GetCameraWindow() {return m_pCamWnd;};
 	RenderCamera& GetCamera() {
-		return m_pCamWnd->Camera();
+		return m_camera;
 	}
 	CZWnd* GetZWnd()	 {return m_pZWnd;};
 
@@ -148,6 +148,7 @@ protected:  // control bar embedded members
 	CSplitterWnd m_wndSplit;
 	CSplitterWnd m_wndSplit2;
 	CSplitterWnd m_wndSplit3;
+	RenderCamera m_camera;
 	CXYWnd* m_pXYWnd;
 	CXYWnd* m_pYZWnd;
 	CXYWnd* m_pXZWnd;

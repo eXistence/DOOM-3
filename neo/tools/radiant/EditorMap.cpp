@@ -403,8 +403,7 @@ entity_t *EntityFromMapEntity(idMapEntity *mapent, CWaitDlg *dlg) {
     Map_LoadFile
  =======================================================================================================================
  */
-void Map_LoadFile(const char *filename) {
-	entity_t *ent;
+void Map_LoadFile(const char *filename) {	
 	CWaitDlg dlg;
 	idStr fileStr, status;
 	idMapFile mapfile;
@@ -457,7 +456,7 @@ void Map_LoadFile(const char *filename) {
 					world_entity = EntityFromMapEntity(mapent, &dlg);
 					world_entity->PostParse(&active_brushes);
 				} else {
-					ent = EntityFromMapEntity(mapent, &dlg);
+					entity_t* ent = EntityFromMapEntity(mapent, &dlg);
 					ent->PostParse(&active_brushes);
 					ent->Name(true);
 					// add the entity to the end of the entity list
@@ -495,25 +494,19 @@ void Map_LoadFile(const char *filename) {
 	// Map_BuildBrushData
 	//
 	g_qeglobals.bNeedConvert = false;
+	
+	idVec3 cameraOrigin = idVec3(0, 0, 0);
+	float cameraYaw = 0;
 
 	// move the view to a start position
-	ent = AngledEntity();
-
-	g_pParentWnd->GetCamera().SetAngle(PITCH, 0);
-
-	if (ent) {
-		idVec3 cameraOrigin;
+	if (entity_t *ent = AngledEntity()) {		
 		ent->GetVectorForKey("origin", cameraOrigin);
-		g_pParentWnd->GetCamera().SetOrigin(cameraOrigin);
+		cameraYaw = ent->FloatForKey("angle");
+	}
 
-		ent->GetVectorForKey("origin", g_pParentWnd->GetXYWnd()->GetOrigin());
-		g_pParentWnd->GetCamera().SetAngle(YAW, ent->FloatForKey("angle"));
-	}
-	else {
-		g_pParentWnd->GetCamera().SetAngle(YAW, 0);
-		g_pParentWnd->GetCamera().SetOrigin(vec3_origin);
-		g_pParentWnd->GetXYWnd()->GetOrigin() = vec3_origin;
-	}
+	g_pParentWnd->GetCamera().SetAngles(idAngles(0, cameraYaw, 0));
+	g_pParentWnd->GetCamera().SetOrigin(cameraOrigin);
+	g_pParentWnd->GetXYWnd()->GetOrigin() = cameraOrigin;
 
 	Map_RegionOff();
 
@@ -783,9 +776,8 @@ void Map_New(void) {
 	world_entity->brushes.onext = world_entity->brushes.oprev = &world_entity->brushes;
 	world_entity->SetKeyValue("classname", "worldspawn");
 	world_entity->eclass = Eclass_ForName("worldspawn", true);
-
-	g_pParentWnd->GetCamera().SetAngle(YAW, 0);
-	g_pParentWnd->GetCamera().SetAngle(PITCH, 0);
+	
+	g_pParentWnd->GetCamera().SetAngles(idAngles(0,0,0));
 	g_pParentWnd->GetCamera().SetOrigin(0, 0, 48);
 	g_pParentWnd->GetXYWnd()->GetOrigin() = idVec3(0, 0, 0);
 

@@ -1088,7 +1088,7 @@ void    GL_SetupVertexAttributes( fhVertexLayout layout, int offset );
 
 class joGLMatrixStack {
 public:
-  explicit joGLMatrixStack(int mode);
+  joGLMatrixStack();
 
   void Load(const float* m);
   void LoadIdentity();
@@ -1117,7 +1117,6 @@ private:
 
   Matrix stack[max_stack_size];
   int    size;
-  int    matrixmode;
 };
 
 extern joGLMatrixStack GL_ProjectionMatrix;

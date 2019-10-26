@@ -103,9 +103,7 @@ idRenderWorldLocal::TouchWorldModels
 ================
 */
 void idRenderWorldLocal::TouchWorldModels( void ) {
-	int i;
-
-	for ( i = 0 ; i < localModels.Num() ; i++ ) {
+	for (int  i = 0 ; i < localModels.Num() ; i++) {
 		renderModelManager->CheckModel( localModels[i]->Name() );
 	}
 }

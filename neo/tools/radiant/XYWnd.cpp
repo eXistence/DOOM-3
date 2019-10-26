@@ -1989,6 +1989,20 @@ idVec3 dragDir;
 idVec3 dragX;
 idVec3 dragY;
 
+void CXYWnd::RotateCamera(idVec3 point) {
+	point = point - g_pParentWnd->GetCamera().GetOrigin();
+
+	const int n1 = (m_nViewType == ViewType::XY) ? 1 : 2;
+	const int n2 = (m_nViewType == ViewType::YZ) ? 1 : 0;
+	const CameraAngle nAngle = (m_nViewType == ViewType::XY) ? YAW : PITCH;
+	if (point[n1] || point[n2]) {
+		auto angles = g_pParentWnd->GetCamera().GetAngles();
+		angles[nAngle] = RAD2DEG(atan2(point[n1], point[n2]));
+		g_pParentWnd->GetCamera().SetAngles(angles);
+		Sys_UpdateWindows(W_CAMERA_IFON | W_XY_OVERLAY);
+	}
+}
+
 void CXYWnd::XY_MouseDown(int x, int y, int buttons) {
 	idVec3	point,center;
 	idVec3	dir, right, up;
@@ -2094,15 +2108,7 @@ void CXYWnd::XY_MouseDown(int x, int y, int buttons) {
 		(g_PrefsDlg.m_nMouseButtons == 3 && m_nButtonstate == MK_MBUTTON) ||
 		(g_PrefsDlg.m_nMouseButtons == 2 && m_nButtonstate == (MK_SHIFT | MK_CONTROL | MK_RBUTTON))
 	) {
-		point = point - g_pParentWnd->GetCamera().GetOrigin();
-
-		int n1 = (m_nViewType == ViewType::XY) ? 1 : 2;
-		int n2 = (m_nViewType == ViewType::YZ) ? 1 : 0;
-		CameraAngle nAngle = (m_nViewType == ViewType::XY) ? YAW : PITCH;
-		if (point[n1] || point[n2]) {
-			g_pParentWnd->GetCamera().SetAngle(nAngle, RAD2DEG( atan2(point[n1], point[n2]) ));
-			Sys_UpdateWindows(W_CAMERA_IFON | W_XY_OVERLAY);
-		}
+		RotateCamera(point);
 	}
 
 	// shift mbutton = move z checker
@@ -2336,16 +2342,7 @@ bool CXYWnd::XY_MouseMoved(int x, int y, int buttons) {
 		(g_PrefsDlg.m_nMouseButtons == 2 && m_nButtonstate == (MK_SHIFT | MK_CONTROL | MK_RBUTTON))
 	) {
 		SnapToPoint(x, y, point);
-		point = point - g_pParentWnd->GetCamera().GetOrigin();
-
-		int n1 = (m_nViewType == ViewType::XY) ? 1 : 2;
-		int n2 = (m_nViewType == ViewType::YZ) ? 1 : 0;
-		CameraAngle nAngle = (m_nViewType == ViewType::XY) ? YAW : PITCH;
-		if (point[n1] || point[n2]) {
-			g_pParentWnd->GetCamera().SetAngle(nAngle, RAD2DEG( atan2(point[n1], point[n2]) ));
-			Sys_UpdateWindows(W_CAMERA_IFON | W_XY_OVERLAY);
-		}
-
+		RotateCamera(point);
 		return false;
 	}
 
@@ -3265,7 +3262,6 @@ void CXYWnd::XY_Draw() {
 	}
 
 	GL_ProjectionMatrix.Push();
-	GL_ProjectionMatrix.Translate(g_qeglobals.d_select_translate[0], g_qeglobals.d_select_translate[1], g_qeglobals.d_select_translate[2]);
 
 	idVec3 brushColor;
 	if (RotateMode()) {
@@ -3382,7 +3378,6 @@ void CXYWnd::XY_Draw() {
 	}
 
 	GL_ProjectionMatrix.Pop();
-	GL_ProjectionMatrix.Translate(-g_qeglobals.d_select_translate[0], -g_qeglobals.d_select_translate[1], -g_qeglobals.d_select_translate[2]);
 
 	if (!(m_nViewType == ViewType::XY)) {
 		GL_ProjectionMatrix.Pop();

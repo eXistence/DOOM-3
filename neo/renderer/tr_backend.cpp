@@ -422,7 +422,7 @@ void GL_SetupVertexAttributes( fhVertexLayout layout, int offset ) {
 	}
 }
 
-joGLMatrixStack::joGLMatrixStack(int mode) : matrixmode(mode), size(0) {
+joGLMatrixStack::joGLMatrixStack() : size(0) {
   LoadIdentity();
 }
 
@@ -555,8 +555,8 @@ const float* joGLMatrixStack::Data(int StackIndex) const {
   return &stack[StackIndex].m[0];
 }
 
-joGLMatrixStack GL_ProjectionMatrix(GL_PROJECTION);
-joGLMatrixStack GL_ModelViewMatrix(GL_MODELVIEW);
+joGLMatrixStack GL_ProjectionMatrix;
+joGLMatrixStack GL_ModelViewMatrix;
 
 /*
 ============================================================================

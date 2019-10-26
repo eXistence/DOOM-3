@@ -71,7 +71,6 @@ IMPLEMENT_DYNCREATE(CCamWnd, CWnd);
  =======================================================================================================================
  */
 CCamWnd::CCamWnd() {
-	memset(&m_Camera, 0, sizeof(RenderCamera));
 	worldDirty = true;
 	worldModel = NULL;
 	renderMode = false;
@@ -80,8 +79,7 @@ CCamWnd::CCamWnd() {
 	animationMode = false;
 	selectMode = false;
 	soundMode = false;
-	saveValid = false;
-	m_Camera.SetOrigin(0, 20, 72);
+	saveValid = false;	
 }
 
 /*
@@ -197,8 +195,8 @@ void CCamWnd::OnPaint() {
 		return;
 	}
 
-	glViewport(0, 0, m_Camera.width, m_Camera.height);
-	glScissor(0, 0, m_Camera.width, m_Camera.height);
+	glViewport(0, 0, width, height);
+	glScissor(0, 0, width, height);
 	glClearColor(g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][0], g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][1], g_qeglobals.d_savedinfo.colors[COLOR_CAMERABACK][2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -366,24 +364,13 @@ void CCamWnd::OriginalMouseDown(UINT nFlags, CPoint point) {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CCamWnd::Cam_BuildMatrix() {
-	float	matrix[4][4];
-	GL_ProjectionMatrix.Get(&matrix[0][0]);
-	m_Camera.BuildMatrix(renderMode, matrix);
-	InitCull();
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 
 void CCamWnd::Cam_ChangeFloor(bool up) {
 	brush_t *b;
 	float	d, bestd, current;
 	idVec3	start, dir;
 
-	idVec3 origin = m_Camera.GetOrigin();
+	idVec3 origin = m_Camera->GetOrigin();
 
 	start[0] = origin[0];
 	start[1] = origin[1];
@@ -418,7 +405,7 @@ void CCamWnd::Cam_ChangeFloor(bool up) {
 	}
 
 	origin[2] += current - bestd;
-	m_Camera.SetOrigin(origin);
+	m_Camera->SetOrigin(origin);
 	Sys_UpdateWindows(W_CAMERA | W_Z_OVERLAY);
 }
 
@@ -433,8 +420,8 @@ void CCamWnd::Cam_PositionDrag() {
 		x -= m_ptCursor.x;
 		y -= m_ptCursor.y;
 
-		m_Camera.MoveCameraUpDown(-y);
-		m_Camera.MoveCameraLeftRight(x);
+		m_Camera->MoveCameraUpDown(-y);
+		m_Camera->MoveCameraLeftRight(x);
 
 		SetCursorPos(m_ptCursor.x, m_ptCursor.y);
 		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
@@ -450,11 +437,10 @@ void CCamWnd::Cam_MouseLook() {
 		current.y -= m_ptCursor.y;
 
 		const float sensitiviy = 0.25f;
-		m_Camera.TurnCameraLeftRight(-current.x *sensitiviy);
-		m_Camera.TurnCameraUpDown(current.y * sensitiviy);
+		m_Camera->TurnCameraLeftRight(-current.x *sensitiviy);
+		m_Camera->TurnCameraUpDown(current.y * sensitiviy);
 
 		SetCursorPos(m_ptCursor.x, m_ptCursor.y);
-		Cam_BuildMatrix();
 	}
 }
 
@@ -477,12 +463,12 @@ void CCamWnd::Cam_MouseControl(float dtime) {
 		}
 	}
 
-	xf = (float)(m_ptButton.x - m_Camera.width / 2) / (m_Camera.width / 2);
-	yf = (float)(m_ptButton.y - m_Camera.height / 2) / (m_Camera.height / 2);
+	xf = (float)(m_ptButton.x - width / 2) / (width / 2);
+	yf = (float)(m_ptButton.y - height / 2) / (height / 2);
 
-	xl = m_Camera.width / 3;
+	xl = width / 3;
 	xh = xl * 2;
-	yl = m_Camera.height / 3;
+	yl = height / 3;
 	yh = yl * 2;
 
 	{
@@ -500,11 +486,10 @@ void CCamWnd::Cam_MouseControl(float dtime) {
 			}
 		}
 
-		m_Camera.MoveCameraForwardBackward(yf * dtime * g_PrefsDlg.m_nMoveSpeed);
-		m_Camera.TurnCameraLeftRight(xf * -dtime * g_PrefsDlg.m_nAngleSpeed);
+		m_Camera->MoveCameraForwardBackward(yf * dtime * g_PrefsDlg.m_nMoveSpeed);
+		m_Camera->TurnCameraLeftRight(xf * -dtime * g_PrefsDlg.m_nAngleSpeed);
 	}
 
-	Cam_BuildMatrix();
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 	g_pParentWnd->PostMessage(WM_TIMER, 0, 0);
 }
@@ -514,9 +499,9 @@ void CCamWnd::Cam_MouseControl(float dtime) {
  =======================================================================================================================
  */
 void CCamWnd::Cam_MouseDown(int x, int y, int buttons) {
-	const float u = (float)(y - m_Camera.height / 2) / (m_Camera.width / 2);
-	const float r = (float)(x - m_Camera.width / 2) / (m_Camera.width / 2);
-	const idVec3 dir = m_Camera.GetRayFromPoint(r, u);
+	const float u = (float)(y - height / 2) / (width / 2);
+	const float r = (float)(x - width / 2) / (width / 2);
+	const idVec3 dir = m_Camera->GetRayFromPoint(r, u);
 
 	GetCursorPos(&m_ptCursor);
 
@@ -547,7 +532,7 @@ void CCamWnd::Cam_MouseDown(int x, int y, int buttons) {
 		else {
 			// something global needs to track which window is responsible for stuff
 			Patch_SetView(W_CAMERA);
-			Drag_Begin(x, y, buttons, m_Camera.GetViewRight(), m_Camera.GetViewUp(), m_Camera.GetOrigin(), dir);
+			Drag_Begin(x, y, buttons, m_Camera->GetViewRight(), m_Camera->GetViewUp(), m_Camera->GetOrigin(), dir);
 		}
 
 		return;
@@ -606,10 +591,10 @@ void CCamWnd::Cam_MouseMoved(int x, int y, int buttons) {
  */
 void CCamWnd::InitCull() {
 	const float xfov = 90;
-	const float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
+	const float yfov = 2 * atan((float)height / width) * idMath::M_RAD2DEG;
 
-	const idVec3 vieworg = m_Camera.GetOrigin();
-	const idAngles viewAngles = m_Camera.GetAngles();
+	const idVec3 vieworg = m_Camera->GetOrigin();
+	const idAngles viewAngles = m_Camera->GetAngles();
 	//const idMat3 viewaxis = m_Camera.angles.ToMat3();
 	const auto viewaxis = idAngles(-viewAngles.pitch, viewAngles.yaw, viewAngles.roll).ToMat3();
 
@@ -674,7 +659,7 @@ bool CCamWnd::CullBrush(brush_t *b, bool cubicOnly) {
 			return true;
 		}
 #else
-		idVec3 distance = bounds.GetCenter() - m_Camera.GetOrigin();
+		idVec3 distance = bounds.GetCenter() - m_Camera->GetOrigin();
 
 		if (distance.LengthSqr() > maxDistanceSquared) {
 			return true;
@@ -798,9 +783,9 @@ static void DrawAxial(face_t *selFace) {
     Cam_Draw
  =======================================================================================================================
  */
-void CCamWnd::SetProjectionMatrix() {
+fhRenderMatrix CCamWnd::CreateProjectionMatrix() const {
 	float xfov = 90;
-	float yfov = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
+	float yfov = 2 * atan((float)height / width) * idMath::M_RAD2DEG;
 
 	float	xmin, xmax, ymin, ymax;
 	float	width, height;
@@ -842,7 +827,8 @@ void CCamWnd::SetProjectionMatrix() {
 	projectionMatrix[11] = -1;
 	projectionMatrix[15] = 0;
 
-	GL_ProjectionMatrix.Load(projectionMatrix);
+	
+	return fhRenderMatrix(projectionMatrix);
 }
 
 void CCamWnd::Cam_Draw() {
@@ -850,29 +836,22 @@ void CCamWnd::Cam_Draw() {
 		return;					// not valid yet
 	}
 
-	// set the sound origin for both simple draw and rendered mode
-	// the editor uses opposite pitch convention
-	const idAngles angles = m_Camera.GetAngles();
-	const idVec3 origin = m_Camera.GetOrigin();
-	idMat3	axis = idAngles( -angles.pitch, angles.yaw, angles.roll ).ToMat3();
-	g_qeglobals.sw->PlaceListener( origin, axis, 0, Sys_Milliseconds(), "Undefined" );
+	g_qeglobals.sw->PlaceListener(m_Camera->GetOrigin(), m_Camera->GetRotationMatrix(), 0, Sys_Milliseconds(), "Undefined" );
 
 	if (renderMode) {
 		Cam_Render();
 	}
 
-	SetProjectionMatrix();
 	g_qeglobals.surfaceBuffer.Clear();
 	g_qeglobals.lineBuffer.Clear();
 	g_qeglobals.pointBuffer.Clear();
 
-	GL_ProjectionMatrix.Rotate(-90.0f, 1.f, 0.f, 0.f); // put Z going up
-	GL_ProjectionMatrix.Rotate(90.0f, 0.f, 0.f, 1.f); // put Z going up
-	GL_ProjectionMatrix.Rotate(angles[0], 0, 1, 0);
-	GL_ProjectionMatrix.Rotate(-angles[1], 0, 0, 1);
-	GL_ProjectionMatrix.Translate(-origin[0], -origin[1], -origin[2]);
+	const auto projectionMatrix = CreateProjectionMatrix();	
+	const auto viewMatrix = m_Camera->CreateViewMatrix();	
+	const auto viewProjectionMatrix = projectionMatrix * viewMatrix;
+	GL_ProjectionMatrix.Load(viewProjectionMatrix.ToFloatPtr());	
 
-	Cam_BuildMatrix();
+	InitCull();
 
 	const brush_t *pList = (g_bClipMode && g_pSplitList) ? g_pSplitList : &selected_brushes;
 
@@ -893,14 +872,14 @@ void CCamWnd::Cam_Draw() {
 			}
 		}
 
-		setGLMode(m_Camera.GetDrawMode());
+		setGLMode(m_Camera->GetDrawMode());
 		Brush_Draw(brush, false);
 	}
 
 	if (!renderMode) {
 		// draw normally
 		for (auto brush = pList->next; brush != pList; brush = brush->next) {
-			setGLMode(m_Camera.GetDrawMode());
+			setGLMode(m_Camera->GetDrawMode());
 			Brush_Draw(brush, true);
 		}
 	}
@@ -916,7 +895,7 @@ void CCamWnd::Cam_Draw() {
 
 	const idVec4 color = idVec4(g_qeglobals.d_savedinfo.colors[COLOR_SELBRUSHES], 0.25f );
 
-	setGLMode(m_Camera.GetDrawMode());
+	setGLMode(m_Camera->GetDrawMode());
 
 
 	glEnable(GL_BLEND);
@@ -1064,8 +1043,8 @@ void CCamWnd::OnSize(UINT nType, int cx, int cy) {
 
 	CRect	rect;
 	GetClientRect(rect);
-	m_Camera.width = rect.right;
-	m_Camera.height = rect.bottom;
+	width = rect.right;
+	height = rect.bottom;
 	InvalidateRect(NULL, false);
 }
 
@@ -1780,24 +1759,24 @@ void CCamWnd::Cam_Render() {
 	const auto oldVidWidth = glConfig.vidWidth;
 	const auto oldVidHeight = glConfig.vidHeight;
 
-	glConfig.windowWidth = m_Camera.width;
-	glConfig.windowHeight = m_Camera.height;
+	glConfig.windowWidth = width;
+	glConfig.windowHeight = height;
 
 	// render it
-	renderSystem->BeginFrame( m_Camera.width, m_Camera.height );
+	renderSystem->BeginFrame( width, height );
 
 	renderView_t refdef;
 	memset( &refdef, 0, sizeof( refdef ) );
-	refdef.vieworg = m_Camera.GetOrigin();
+	refdef.vieworg = m_Camera->GetOrigin();
 
 	// the editor uses opposite pitch convention
-	const auto angles = m_Camera.GetAngles();
+	const auto angles = m_Camera->GetAngles();
 	refdef.viewaxis = idAngles( -angles.pitch, angles.yaw, angles.roll ).ToMat3();
 
 	refdef.width = SCREEN_WIDTH;
 	refdef.height = SCREEN_HEIGHT;
 	refdef.fov_x = 90;
-	refdef.fov_y = 2 * atan((float)m_Camera.height / m_Camera.width) * idMath::M_RAD2DEG;
+	refdef.fov_y = 2 * atan((float)height / width) * idMath::M_RAD2DEG;
 
 	// only set in animation mode to give a consistent look
 	if (animationMode) {
@@ -1841,8 +1820,8 @@ void CCamWnd::UpdateCameraView() {
 			entity_t *ent = FindEntity("target", name);
 			if (ent) {
 				if (!saveValid) {
-					saveOrg = m_Camera.GetOrigin();
-					saveAng = m_Camera.GetAngles();
+					saveOrg = m_Camera->GetOrigin();
+					saveAng = m_Camera->GetAngles();
 					saveValid = true;
 				}
 				idVec3 v = b->owner->origin - ent->origin;
@@ -1851,19 +1830,16 @@ void CCamWnd::UpdateCameraView() {
 				ang.pitch = -ang.pitch;
 				ang.roll = 0.0f;
 
-				m_Camera.SetAngles(ang);
-				m_Camera.SetOrigin(ent->origin);
-
-				Cam_BuildMatrix();
+				m_Camera->SetAngles(ang);
+				m_Camera->SetOrigin(ent->origin);
 				Sys_UpdateWindows( W_CAMERA );
 				return;
 			}
 		}
 	}
 	if (saveValid) {
-		m_Camera.SetAngles(saveAng);
-		m_Camera.SetOrigin(saveOrg);
-		Cam_BuildMatrix();
+		m_Camera->SetAngles(saveAng);
+		m_Camera->SetOrigin(saveOrg);
 		Sys_UpdateWindows(W_CAMERA);
 		saveValid = false;
 	}

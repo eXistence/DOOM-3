@@ -212,6 +212,8 @@ protected:
   CPoint m_ptDragAdj;
   CPoint m_ptDragTotal;
 
+  void RotateCamera(idVec3 point);
+
   void DrawOrientedText(const char* text, const idVec3& pos, const idVec4& color);
   void DrawOrientedText(const char* text, const idVec3& pos, const idVec3& color);
 

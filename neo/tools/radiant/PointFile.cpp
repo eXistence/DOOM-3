@@ -80,10 +80,10 @@ static void Pointfile_NextPrev(int i)
 	g_pParentWnd->GetXYWnd()->GetOrigin() = cameraOrigin;
 
 	const idVec3 dir = (s_pointvecs[s_check_point + 1] - cameraOrigin).Normalized();
-
-
-	g_pParentWnd->GetCamera().SetAngle(YAW, atan2(dir[1], dir[0]) * 180 / 3.14159);
-	g_pParentWnd->GetCamera().SetAngle(PITCH, asin(dir[2]) * 180 / 3.14159);
+	
+	const float yaw = atan2(dir[1], dir[0]) * 180 / 3.14159;
+	const float pitch = asin(dir[2]) * 180 / 3.14159;	
+	g_pParentWnd->GetCamera().SetAngles(idAngles(pitch, yaw, 0));
 
 	Sys_UpdateWindows(W_ALL);
 }

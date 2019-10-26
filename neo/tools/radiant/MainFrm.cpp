@@ -1630,6 +1630,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext *pContext) {
 	GetClientRect(rctParent);
 
 	m_pCamWnd = new CCamWnd();
+	m_pCamWnd->SetCamera(&m_camera);	
 	m_pCamWnd->Create(CAMERA_WINDOW_CLASS, "", QE3_CHILDSTYLE, rect, this, 1234);
 
 	m_pZWnd = new CZWnd();
@@ -2627,7 +2628,7 @@ bool FindNextBrush(brush_t* pPrevFoundBrush)	// can be NULL for fresh search
 		//
 		v3Origin[1] -= 32; // back off a touch to look at it
 		g_pParentWnd->GetCamera().SetOrigin(v3Origin);
-		g_pParentWnd->GetCamera().SetAngles(0, 90, 0);
+		g_pParentWnd->GetCamera().SetAngles(idAngles(0, 90, 0));
 
 		// force main screen into XY camera mode (just in case)...
 		//
@@ -2733,7 +2734,7 @@ void CMainFrame::OnMiscSetViewPos()
 				fYaw = 0;	// jic
 			}
 
-			g_pParentWnd->GetCamera().SetYaw(fYaw);
+			g_pParentWnd->GetCamera().SetAngles(idAngles(0, fYaw, 0));
 			g_pParentWnd->GetCamera().SetOrigin(v3Viewpos);
 			Sys_UpdateWindows (W_ALL);
 		}

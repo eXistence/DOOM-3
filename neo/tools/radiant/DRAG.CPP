@@ -744,19 +744,7 @@ void Drag_MouseUp(int nButtons) {
 		Sys_UpdateWindows(W_ALL);
 	}
 
-	if (g_qeglobals.d_select_translate[0] || g_qeglobals.d_select_translate[1] || g_qeglobals.d_select_translate[2]) {
-		Select_Move(g_qeglobals.d_select_translate);
-		VectorCopy(vec3_origin, g_qeglobals.d_select_translate);
-		Sys_UpdateWindows(W_CAMERA);
-	}
-
 	g_pParentWnd->SetStatusText(3, "");
-
-/*
-	if (g_pParentWnd->GetCamera()->UpdateRenderEntities()) {
-		Sys_UpdateWindows(W_CAMERA);
-	}
-*/
 	
 	Undo_EndBrushList(&selected_brushes);
 	Undo_End();

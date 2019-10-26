@@ -29,4 +29,3 @@ If you have questions concerning this license or the applicable additional terms
 #pragma once
 
 void QtLightEditorInit( const idDict* spawnArgs );
-void QtCameraViewInit();

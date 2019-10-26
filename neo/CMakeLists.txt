@@ -899,6 +899,8 @@ IF(WIN32)
       tools/radiant/QERTYPES.H
       tools/radiant/Radiant.cpp
       tools/radiant/Radiant.h
+      tools/radiant/RenderCamera.cpp
+      tools/radiant/RenderCamera.h      
       tools/radiant/RotateDlg.cpp
       tools/radiant/RotateDlg.h
       tools/radiant/ScaleDialog.cpp

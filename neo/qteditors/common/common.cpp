@@ -34,7 +34,6 @@ If you have questions concerning this license or the applicable additional terms
 static QApplication * app = nullptr;
 static fhLightEditor * lightEditor = nullptr;
 static fhEfxEditor * efxEditor = nullptr;
-static QWidget * cameraView = nullptr;
 
 void QtRun()
 {
@@ -98,13 +97,4 @@ void EfxEditorInit() {
 	efxEditor->Init();
 	efxEditor->show();
 	efxEditor->setFocus();
-}
-
-void QtCameraViewInit() {
-	if (!cameraView) {
-		cameraView = new QLabel("Hello world");
-	}
-
-	cameraView->show();
-	cameraView->setFocus();
 }

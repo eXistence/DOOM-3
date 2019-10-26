@@ -153,8 +153,7 @@ typedef struct
 
 	// connect entities uses the last two brushes selected
 	int			 d_select_count;
-	brush_t		*d_select_order[MAX_MAP_ENTITIES];
-	idVec3       d_select_translate;    // for dragging w/o making new display lists
+	brush_t		*d_select_order[MAX_MAP_ENTITIES];	
 	select_t     d_select_mode;
 	idPointListInterface *selectObject;	//
 

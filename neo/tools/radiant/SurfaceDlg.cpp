@@ -292,13 +292,14 @@ void DoSurface (void) {
 		g_patch_texdef.rotate = g_PrefsDlg.m_nRotation;
 
 		g_dlgSurface.Create(IDD_SURFACE);
+		/*
 		CRect rct;
 		LONG lSize = sizeof(rct);
 		if (LoadRegistryInfo("radiant_SurfaceWindow", &rct, &lSize))  {
 			g_dlgSurface.SetWindowPos( NULL, rct.left, rct.top, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW );
 		}
-		g_dlgSurface.ShowWindow(SW_SHOW);
-		Sys_UpdateWindows(W_ALL);
+		*/
+		g_dlgSurface.ShowWindow(SW_SHOW);		
 	} else {
 		g_surfwin = g_dlgSurface.GetSafeHwnd();
 		g_dlgSurface.SetTexMods ();

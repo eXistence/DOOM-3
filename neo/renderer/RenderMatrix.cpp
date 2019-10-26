@@ -32,7 +32,7 @@ const fhRenderMatrix fhRenderMatrix::identity;
 fhRenderMatrix fhRenderMatrix::CreateProjectionMatrix( float fov, float aspect, float nearClip, float farClip ) {
 	const float D2R = idMath::PI / 180.0;
 	const float scale = 1.0 / tan( D2R * fov / 2.0 );
-	const float nearmfar = nearClip - farClip;
+	const float nearmfar = nearClip - farClip;	
 
 	fhRenderMatrix m;
 	m[0] = scale;

@@ -314,8 +314,11 @@ void CDlgCamera::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		g_splineList->getCameraInfo(p, origin, dir, &fov);
 
 		g_pParentWnd->GetCamera().SetOrigin(origin);
-		g_pParentWnd->GetCamera().SetAngle(YAW, atan2 (dir[1], dir[0])*180/3.14159);
-		g_pParentWnd->GetCamera().SetAngle(PITCH, asin (dir[2])*180/3.14159);
+
+		const float yaw = atan2(dir[1], dir[0]) * 180 / 3.14159;
+		const float pitch = asin(dir[2]) * 180 / 3.14159;
+
+		g_pParentWnd->GetCamera().SetAngles(idAngles(pitch, yaw, 0));
 
 	}
 	UpdateData(FALSE);
