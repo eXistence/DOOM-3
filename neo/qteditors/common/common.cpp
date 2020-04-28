@@ -28,12 +28,16 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "dialogs/LightEditor.h"
 #include "dialogs/EfxEditor.h"
+#include "dialogs/RenderPreview.h"
 
 #include <qstylefactory.h>
+
+class RenderCamera;
 
 static QApplication * app = nullptr;
 static fhLightEditor * lightEditor = nullptr;
 static fhEfxEditor * efxEditor = nullptr;
+static fhPreviewCamera *previewCamera = nullptr;
 
 void QtRun()
 {
@@ -97,4 +101,20 @@ void EfxEditorInit() {
 	efxEditor->Init();
 	efxEditor->show();
 	efxEditor->setFocus();
+}
+
+void QtPreviewCamera(RenderCamera *renderCamera) {
+	if (!previewCamera) {
+		previewCamera = new fhPreviewCamera(renderCamera, nullptr);
+	}
+	previewCamera->show();
+	previewCamera->setFocus();
+}
+
+void QtPreviewCameraUpdate() {
+	if (previewCamera) {
+		previewCamera->draw();
+		previewCamera->repaint();
+		qApp->processEvents();
+	}
 }

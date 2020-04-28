@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 
 class idGLDrawable;
 class fhRenderWindow;
+class RenderCamera;
 
 class fhRenderWidget : public QWidget {
 	Q_OBJECT
@@ -41,11 +42,16 @@ public:
 		m_drawable = d;
 	}
 
+	void setCamera(RenderCamera* camera) { 
+		m_camera = camera;
+	}
+
 	void updateDrawable();
 
 	virtual QSize sizeHint() const override;
 
 private:
+	RenderCamera *m_camera = nullptr;
 	fhRenderWindow* m_window;
 	idGLDrawable* m_drawable;
 };

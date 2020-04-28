@@ -32,9 +32,8 @@ If you have questions concerning this license or the applicable additional terms
 // CCamWnd window
 
 class fhRenderMatrix;
-
-
-
+struct entity_t;
+struct brush_t;
 
 class CCamWnd : public CWnd
 {

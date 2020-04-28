@@ -159,16 +159,33 @@ void fhSurfaceBuffer::Clear() {
 }
 
 void fhSurfaceBuffer::Commit(const idVec4& colorModulate, const idVec4& colorAdd) {
+
+  fhSurfaceBuffer::entry_t* trans = NULL;
+
   for(int i=0; i<entries.Num(); ++i) {
     entry_t* entry = entries[i];
 
     if(!entry->material)
-      break;
+      break;	
 
-    entries[i]->trisBuffer.Commit(entry->material->GetEditorImage(), colorModulate, colorAdd);
+	if (strcmp(entry->material->GetName(), "textures/common/nodraw") == 0) {
+		trans = entry;		
+	} else {
+		entries[i]->trisBuffer.Commit(entry->material->GetEditorImage(), colorModulate, colorAdd);
+	}
   }
 
+  if (trans) {
+	  glEnable(GL_BLEND);
+	  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	  trans->trisBuffer.Commit(trans->material->GetEditorImage(), colorModulate, colorAdd);
+	  glDisable(GL_BLEND);
+  }
+  
+
   this->coloredTrisBuffer.Commit(nullptr, colorModulate, colorAdd);
+
+
 }
 
 

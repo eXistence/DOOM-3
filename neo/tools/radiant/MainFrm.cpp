@@ -60,6 +60,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../sys/win32/rc/common_resource.h"
 #include "../comafx/DialogName.h"
 #include "../comafx/DialogColorPicker.h"
+#include "../qteditors/qteditors_public.h"
+
 
 #ifdef _DEBUG
 	#define new DEBUG_NEW
@@ -1655,6 +1657,8 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext *pContext) {
 	LoadWindowPlacement(m_pYZWnd->GetSafeHwnd(), "radiant_yzwindow");
 	LoadWindowPlacement(m_pCamWnd->GetSafeHwnd(), "radiant_camerawindow");
 	LoadWindowPlacement(m_pZWnd->GetSafeHwnd(), "radiant_zwindow");
+
+	QtPreviewCamera(&m_camera);
 
 	if (!g_PrefsDlg.m_bXZVis) {
 		m_pXZWnd->ShowWindow(SW_HIDE);
@@ -3628,6 +3632,8 @@ void CMainFrame::UpdateWindows(int nBits) {
 		if (m_pCamWnd) {
 			m_pCamWnd->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 		}
+
+		QtPreviewCameraUpdate();
 	}
 
 	if (nBits & (W_Z | W_Z_OVERLAY)) {

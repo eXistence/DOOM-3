@@ -28,4 +28,8 @@ If you have questions concerning this license or the applicable additional terms
 
 #pragma once
 
+class RenderCamera;
+
 void QtLightEditorInit( const idDict* spawnArgs );
+void QtPreviewCamera(RenderCamera* renderCamera);
+void QtPreviewCameraUpdate();

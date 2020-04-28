@@ -67,53 +67,56 @@ void idGLDrawable::buttonUp( MouseButton button, float x, float y ) {
 }
 
 void idGLDrawable::mouseMove( float x, float y ) {
-	if (handleMove) {
-		Update();
-		if (Sys_KeyDown( VK_MENU )) {
-			// scale
-			float *px = &x;
-			float *px2 = &pressX;
-
-			if (idMath::Diff(y, pressY) > idMath::Diff(x, pressX)) {
-				px = &y;
-				px2 = &pressY;
-			}
-
-			if (*px > *px2) {
-				// zoom in
-				scale += 0.1f;
-				if (scale > 10.0f) {
-					scale = 10.0f;
-				}
-			}
-			else if (*px < *px2) {
-				// zoom out
-				scale -= 0.1f;
-				if (scale <= 0.001f) {
-					scale = 0.001f;
-				}
-			}
-
-			*px2 = *px;
-			//::SetCursorPos(pressX, pressY);
-
-		}
-		else if (Sys_KeyDown( VK_SHIFT )) {
-			// rotate
-		}
-		else {
-			// origin
-			if (x != pressX) {
-				xOffset += (x - pressX);
-				pressX = x;
-			}
-			if (y != pressY) {
-				yOffset -= (y - pressY);
-				pressY = y;
-			}
-			//::SetCursorPos(pressX, pressY);
-		}
+	if (!handleMove) {
+		return;
 	}
+	
+	if (Sys_KeyDown( VK_MENU )) {
+		// scale
+		float *px = &x;
+		float *px2 = &pressX;
+
+		if (idMath::Diff(y, pressY) > idMath::Diff(x, pressX)) {
+			px = &y;
+			px2 = &pressY;
+		}
+
+		if (*px > *px2) {
+			// zoom in
+			scale += 0.1f;
+			if (scale > 10.0f) {
+				scale = 10.0f;
+			}
+		}
+		else if (*px < *px2) {
+			// zoom out
+			scale -= 0.1f;
+			if (scale <= 0.001f) {
+				scale = 0.001f;
+			}
+		}
+
+		*px2 = *px;
+		//::SetCursorPos(pressX, pressY);
+
+	}
+	else if (Sys_KeyDown( VK_SHIFT )) {
+		// rotate
+	}
+	else {
+		// origin
+		if (x != pressX) {
+			xOffset += (x - pressX);
+			pressX = x;
+		}
+		if (y != pressY) {
+			yOffset -= (y - pressY);
+			pressY = y;
+		}
+		//::SetCursorPos(pressX, pressY);
+	}
+
+	Update();
 }
 
 void idGLDrawable::draw( int x, int y, int w, int h ) {
@@ -522,3 +525,6 @@ void idGLDrawableModel::draw( int x, int y, int w, int h ) {
 
 	GL_ModelViewMatrix.LoadIdentity();
 }
+
+
+

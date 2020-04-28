@@ -7,6 +7,8 @@ set(SOURCES
   dialogs/EfxEditor.cpp  
   dialogs/LightEditor.h
   dialogs/LightEditor.cpp
+  dialogs/RenderPreview.h
+  dialogs/RenderPreview.cpp  
   widgets/RenderWidget.h
   widgets/RenderWidget.cpp  
   widgets/NumEdit.h
