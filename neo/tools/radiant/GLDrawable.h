@@ -54,6 +54,7 @@ public:
 	virtual void Update(){};
 	float getScale() { return scale; }
 	void setScale(float f) { scale = f; }
+	virtual void mouseScroll(float r) {}
 
 protected:
 	float scale;
@@ -132,7 +133,6 @@ public:
 	void SetSkin(const char *skin);
 };
 
-
 struct brush_t;
 class RenderCamera;
 
@@ -145,13 +145,12 @@ public:
 	void mouseMove(float x, float y) override;
 
 private:
-	fhRenderMatrix CreateProjectionMatrix() const;	
-	//void BuildEntityRenderState(entity_t *ent, bool update);
+	fhRenderMatrix CreateProjectionMatrix() const;
+	// void BuildEntityRenderState(entity_t *ent, bool update);
 	void Cam_Draw();
 	void Cam_Render();
 	void InitCull();
 	bool CullBrush(brush_t *b, bool cubicOnly);
-	
 
 	// game renderer interaction
 	qhandle_t worldModelDef;
@@ -183,5 +182,5 @@ private:
 
 	int width = 0;
 	int height = 0;
-	idVec2 prevCursor = idVec2(-1, -1);	
+	idVec2 prevCursor = idVec2(-1, -1);
 };

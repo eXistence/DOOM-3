@@ -48,7 +48,7 @@ void Drag_Begin(int x, int y, int buttons, const idVec3 &xaxis, const idVec3 &ya
 
 class KeyEventFilter : public QObject {
 public:
-	explicit KeyEventFilter(RenderCamera **camera, fhRenderWindow *parent) : m_camera(camera), parent(parent) {}
+	explicit KeyEventFilter(RenderCamera **camera, fhLegacyRenderWindow *parent) : m_camera(camera), parent(parent) {}
 
 	void setEnabled(bool enabled);
 	bool isEnabled() const { return enabled; }
@@ -73,8 +73,10 @@ protected:
 		case QEvent::MouseButtonRelease:
 			return onMouseButtonRelease(*static_cast<QMouseEvent *>(event));
 		case QEvent::MouseButtonDblClick:
-			setEnabled(false);
-			break;
+			if (((QMouseEvent *)event)->button() == Qt::LeftButton) {
+				setEnabled(false);
+				break;
+			}			
 		default:
 			return QObject::eventFilter(obj, event);
 		}
@@ -97,20 +99,20 @@ private:
 	QCursor cursor;
 
 	RenderCamera *camera() { return *m_camera; }
-	fhRenderWindow *parent = nullptr;
+	fhLegacyRenderWindow *parent = nullptr;
 	bool rightMouseButtonDown = false;
 	RenderCamera **m_camera;
 	bool enabled = false;
 };
 
-class fhRenderWindow : public QWindow {
+class fhLegacyRenderWindow : public QWindow {
 	bool mouseDown = false;
 	int prevX = 0;
 	int prevY = 0;
 	KeyEventFilter *eventFilter = nullptr;
 
 public:
-	fhRenderWindow(idGLDrawable **drawable, RenderCamera **camera, QWindow *parent = nullptr)
+	fhLegacyRenderWindow(idGLDrawable **drawable, RenderCamera **camera, QWindow *parent = nullptr)
 		: QWindow(parent), m_context(nullptr), m_initialized(false), m_drawable(drawable), m_camera(camera) {
 
 		setSurfaceType(QWindow::OpenGLSurface);
@@ -127,8 +129,17 @@ public:
 		});
 	}
 
-	virtual void mouseDoubleClickEvent(QMouseEvent *event) override { this->eventFilter->setEnabled(true); }
+	virtual void mouseDoubleClickEvent(QMouseEvent *event) override {
+		if (event->button() == Qt::LeftButton) {
+			this->eventFilter->setEnabled(true);
+		}
+	}
 	virtual void focusOutEvent(QFocusEvent *event) override { this->eventFilter->setEnabled(false); }
+	void wheelEvent(QWheelEvent *event) override {
+		QPoint numDegrees = event->angleDelta() / 8;
+		(*m_drawable)->mouseScroll(numDegrees.y());
+		event->accept();
+	}
 
 	virtual void exposeEvent(QExposeEvent *) override {
 		if (isExposed())
@@ -336,7 +347,7 @@ fhRenderWidget::fhRenderWidget(QWidget *parent) : QWidget(parent), m_drawable(nu
 	layout->setMargin(0);
 	layout->setSpacing(0);
 
-	m_window = new fhRenderWindow(&m_drawable, &m_camera);
+	m_window = new fhLegacyRenderWindow(&m_drawable, &m_camera);
 	layout->addWidget(QWidget::createWindowContainer(m_window, this));
 
 	this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);

@@ -29,7 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #pragma once
 
 class idGLDrawable;
-class fhRenderWindow;
+class fhLegacyRenderWindow;
 class RenderCamera;
 
 class fhRenderWidget : public QWidget {
@@ -52,6 +52,6 @@ public:
 
 private:
 	RenderCamera *m_camera = nullptr;
-	fhRenderWindow* m_window;
+	fhLegacyRenderWindow* m_window;
 	idGLDrawable* m_drawable;
 };

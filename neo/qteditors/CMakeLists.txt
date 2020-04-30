@@ -7,10 +7,14 @@ set(SOURCES
   dialogs/EfxEditor.cpp  
   dialogs/LightEditor.h
   dialogs/LightEditor.cpp
+  dialogs/OrthographicView.h
+  dialogs/OrthographicView.cpp
   dialogs/RenderPreview.h
   dialogs/RenderPreview.cpp  
   widgets/RenderWidget.h
   widgets/RenderWidget.cpp  
+  widgets/RenderWindow.h
+  widgets/RenderWindow.cpp  
   widgets/NumEdit.h
   widgets/NumEdit.cpp
   widgets/SliderNumEdit.h
