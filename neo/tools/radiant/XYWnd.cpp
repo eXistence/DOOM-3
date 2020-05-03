@@ -67,24 +67,40 @@ void drawText(const char* text, float scale, const idVec3& pos, const idVec3& co
 	drawText(text, scale, pos, idVec4(color.x, color.y, color.z, 1.0f));
 }
 
-void CXYWnd::DrawOrientedText(const char* text, const idVec3& pos, const idVec4& color) {
+void DrawOrientedText(ViewType viewType, float scale, const char* text, const idVec3& pos, const idVec4& color) {
 	static const idMat3 xyRotation = idAngles(90, 90, 0).ToMat3();
 	static const idMat3 xzRotation = idAngles(0, 90, 0).ToMat3();
 	static const idMat3 yzRotation = idAngles(180, 0, 180).ToMat3();
 
 	idMat3 rotation = xyRotation;
-	if (m_nViewType == ViewType::XZ) {
+	if (viewType == ViewType::XZ) {
 		rotation = xzRotation;
-	} else if (m_nViewType == ViewType::YZ) {
+	} else if (viewType == ViewType::YZ) {
 		rotation = yzRotation;
 	}
 
-	RB_DrawText(text, pos, 0.4f * 1.0 / m_fScale, color, rotation, 0);
+	RB_DrawText(text, pos, 0.4f * 1.0 / scale, color, rotation, 0);
 }
 
-void CXYWnd::DrawOrientedText(const char* text, const idVec3& pos, const idVec3& color) {
-	DrawOrientedText(text, pos, idVec4(color.x, color.y, color.z, 1.0f));
+void DrawOrientedText(ViewType viewType, float scale, const char *text, const idVec3 &pos,
+							  const idVec3 &color) {
+	DrawOrientedText(viewType, scale, text, pos, idVec4(color.x, color.y, color.z, 1.0f));
 }
+
+void DrawOrigin(ViewType viewType, float scale, const idVec3 &position, float originX, float originY, const char *axisX,
+				const char *axisY, const idVec3 &color) {
+	char text[256];
+	idStr::snPrintf(text, sizeof(text) - 1, "(%s:%.f %s:%.f)", axisX, originX, axisY, originY);
+	DrawOrientedText(viewType, scale, text, position, color);
+}
+
+void DrawDimension(ViewType viewType, float scale, const idVec3 &position, float value, const char *label,
+				   const idVec3 &color) {
+	char text[256];
+	idStr::snPrintf(text, sizeof(text) - 1, "%s:%.f", label, value);
+	DrawOrientedText(viewType, scale, text, position, color);
+}
+
 
 static CString	g_strStatus;
 
@@ -135,7 +151,7 @@ static CPtrArray			dragPoints;
 static CDragPoint	*activeDrag = NULL;
 static bool			activeDragging = false;
 
-static bool CullBrush(const brush_t *brush, const idBounds &viewBounds) {
+bool CullBrush(const brush_t *brush, const idBounds &viewBounds) {
 	if (brush->forceVisibile)
 		return false;
 
@@ -2701,15 +2717,14 @@ void CXYWnd::DrawRotateIcon() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CXYWnd::DrawCameraIcon() {
+void DrawCameraIcon(ViewType viewType, float scale) {
 	float	x, y, a;
 
-	if (m_nViewType == ViewType::XY) {
+	if (viewType == ViewType::XY) {
 		x = g_pParentWnd->GetCamera().GetOrigin()[0];
 		y = g_pParentWnd->GetCamera().GetOrigin()[1];
 		a = g_pParentWnd->GetCamera().GetAngles()[YAW] * idMath::M_DEG2RAD;
-	}
-	else if (m_nViewType == ViewType::YZ) {
+	} else if (viewType == ViewType::YZ) {
 		x = g_pParentWnd->GetCamera().GetOrigin()[1];
 		y = g_pParentWnd->GetCamera().GetOrigin()[2];
 		a = g_pParentWnd->GetCamera().GetAngles()[PITCH] * idMath::M_DEG2RAD;
@@ -2720,7 +2735,7 @@ void CXYWnd::DrawCameraIcon() {
 		a = g_pParentWnd->GetCamera().GetAngles()[PITCH] * idMath::M_DEG2RAD;
 	}
 
-	float scale = 1.0/m_fScale;	//jhefty - keep the camera icon proportionally the same size
+	scale = 1.0 / scale; // jhefty - keep the camera icon proportionally the same size
 
   fhImmediateMode im;
 	im.Color3f(0.0, 0.0, 1.0);
@@ -2961,19 +2976,7 @@ void DrawPathLines(void) {
 //    can be greatly simplified but per usual i am in a hurry which is not an excuse, just a fact
 // =======================================================================================================================
 
-void CXYWnd::DrawOrigin(const idVec3& position, float originX, float originY, const char* axisX, const char* axisY, const idVec3& color)
-{
-  char text[256];
-  idStr::snPrintf(text, sizeof(text)-1, "(%s:%.f %s:%.f)", axisX, originX, axisY, originY);
-  DrawOrientedText(text, position, color);
-}
 
-void CXYWnd::DrawDimension(const idVec3& position, float value, const char* label, const idVec3& color)
-{
-  char text[256];
-  idStr::snPrintf(text, sizeof(text)-1, "%s:%.f", label, value);
-  DrawOrientedText(text, position, color);
-}
 
 //FIXME(johl): complexity is way higher than needed, this needs to be completely rewritten.
 void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxBounds) {
@@ -3007,7 +3010,7 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
 
 		im.End();
 
-		DrawOrigin(
+		DrawOrigin(m_nViewType, m_fScale,
 			idVec3(vMinBounds[nDim1] + 4, vMaxBounds[nDim2] + 8 / m_fScale, 0),
 			vMinBounds[nDim1],
 			vMaxBounds[nDim2],
@@ -3015,13 +3018,13 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
 			"y",
 			color);
 
-		DrawDimension(
+		DrawDimension(m_nViewType, m_fScale,
 			idVec3(Betwixt(vMinBounds[nDim1], vMaxBounds[nDim1]), vMinBounds[nDim2] - 20.0 / m_fScale, 0.0f),
 			vSize[nDim1],
 			"x",
 			color);
 
-		DrawDimension(
+		DrawDimension(m_nViewType, m_fScale,
 			idVec3(vMaxBounds[nDim1] + 16.0 / m_fScale, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2]), 0.0f),
 			vSize[nDim2],
 			"y",
@@ -3050,7 +3053,7 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
 
 		im.End();
 
-		DrawOrigin(
+		DrawOrigin(m_nViewType, m_fScale,
 			idVec3(vMinBounds[nDim1] + 4, 0, vMaxBounds[nDim2] + 8 / m_fScale),
 			vMinBounds[nDim1],
 			vMaxBounds[nDim2],
@@ -3058,13 +3061,13 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
 			"z",
 			color);
 
-		DrawDimension(
+		DrawDimension(m_nViewType, m_fScale,
 			idVec3(Betwixt(vMinBounds[nDim1], vMaxBounds[nDim1]), 0, vMinBounds[nDim2] - 20.0 / m_fScale),
 			vSize[nDim1],
 			"x",
 			color);
 
-		DrawDimension(
+		DrawDimension(m_nViewType, m_fScale,
 			idVec3(vMaxBounds[nDim1] + 16.0 / m_fScale, 0, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2])),
 			vSize[nDim2],
 			"z",
@@ -3093,7 +3096,7 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
 
 		im.End();
 
-		DrawOrigin(
+		DrawOrigin(m_nViewType, m_fScale,
 			idVec3(0, vMinBounds[nDim1] + 4.0, vMaxBounds[nDim2] + 8 / m_fScale),
 			vMinBounds[nDim1],
 			vMaxBounds[nDim2],
@@ -3101,13 +3104,13 @@ void CXYWnd::PaintSizeInfo(int nDim1, int nDim2, idVec3 vMinBounds, idVec3 vMaxB
 			"z",
 			color);
 
-		DrawDimension(
+		DrawDimension(m_nViewType, m_fScale,
 			idVec3(0, Betwixt(vMinBounds[nDim1], vMaxBounds[nDim1]), vMinBounds[nDim2] - 20.0 / m_fScale),
 			vSize[nDim1],
 			"y",
 			color);
 
-		DrawDimension(
+		DrawDimension(m_nViewType, m_fScale,
 			idVec3(0, vMaxBounds[nDim1] + 16.0 / m_fScale, Betwixt(vMinBounds[nDim2], vMaxBounds[nDim2])),
 			vSize[nDim2],
 			"z",
@@ -3420,7 +3423,7 @@ void CXYWnd::XY_Draw() {
 	}
 
 	// now draw camera point
-	DrawCameraIcon();
+	DrawCameraIcon(m_nViewType, m_fScale);
 
 	if (RotateMode()) {
 		DrawRotateIcon();

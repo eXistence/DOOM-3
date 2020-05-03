@@ -204,6 +204,7 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt5Widgets)
 if(Qt5Widgets_FOUND)
   add_definitions(-DID_ALLOW_QT)
+  add_subdirectory(ads)
   add_subdirectory(qteditors)
 
   get_target_property(QtCore_location Qt5::Core LOCATION)

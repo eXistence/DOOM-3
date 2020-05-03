@@ -10,10 +10,10 @@ public:
 	virtual void exposeEvent(QExposeEvent *) override;
 	virtual bool event(QEvent *ev) override;
 
-protected:
-	virtual void render(){};
+	QWidget *createContainingWidget(QWidget *parent);
 
 private:
+	virtual void render(){};
 	void callRender();
 	void init();
 

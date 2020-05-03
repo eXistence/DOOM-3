@@ -33,7 +33,7 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
 class fhRenderWidget;
 
-class OrthographicDrable;
+class fhOrthoRenderWindow;
 
 class fhOrthographicView : public QWidget {
 	Q_OBJECT
@@ -44,6 +44,5 @@ public:
 	void draw();
 
 private:
-	OrthographicDrable *drawable;
-	fhRenderWidget *renderWidget;
+	fhOrthoRenderWindow *renderWindow;
 };

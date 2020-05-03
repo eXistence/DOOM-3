@@ -89,7 +89,8 @@ qertrace_t Test_Ray ( const idVec3 &origin, const idVec3 &dir, int flags );
 CDragPoint *PointRay( const idVec3 &org, const idVec3 &dir, float *dist);
 void SelectCurvePointByRay( const idVec3 &org, const idVec3 &dir, int buttons);
 
-void Select_GetBounds (idVec3 &mins, idVec3 &maxs);
+bool Select_IsEmpty();
+void Select_GetBounds(idVec3 &mins, idVec3 &maxs);
 void Select_Brush (brush_t *b, bool bComplete = true, bool bStatus = true);
 void Select_Ray (idVec3 origin, idVec3 dir, int flags);
 void Select_Delete (void);

@@ -1,7 +1,7 @@
 #include "RenderWindow.h"
-#include <QtPlatformHeaders/QWGLNativeContext>
-#include <QOpenGLContext>
 #include "../../sys/win32/win_local.h"
+#include <QOpenGLContext>
+#include <QtPlatformHeaders/QWGLNativeContext>
 
 fhRenderWindow::fhRenderWindow(QWindow *parent) : QWindow(parent), m_context(nullptr), m_initialized(false) {
 
@@ -62,4 +62,8 @@ void fhRenderWindow::init() {
 		delete m_context;
 		m_context = 0;
 	}
+}
+
+QWidget *fhRenderWindow::createContainingWidget(QWidget* parent) {
+	return QWidget::createWindowContainer(this, parent);
 }

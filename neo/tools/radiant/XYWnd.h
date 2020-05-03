@@ -108,8 +108,7 @@ public:
 	void SetOrigin(idVec3 org);		// PGM
 	void XY_Init();
   void XY_Draw();
-  void DrawRotateIcon();
-  void DrawCameraIcon();
+  void DrawRotateIcon();  
   void XY_DrawBlockGrid();
   void XY_DrawGrid();
   bool XY_MouseMoved (int x, int y, int buttons);
@@ -213,12 +212,6 @@ protected:
   CPoint m_ptDragTotal;
 
   void RotateCamera(idVec3 point);
-
-  void DrawOrientedText(const char* text, const idVec3& pos, const idVec4& color);
-  void DrawOrientedText(const char* text, const idVec3& pos, const idVec3& color);
-
-  void DrawOrigin(const idVec3& position, float originX, float originY, const char* axisX, const char* axisY, const idVec3& color);
-  void DrawDimension(const idVec3& position, float value, const char* label, const idVec3& color);
 
 	void OriginalButtonUp(UINT nFlags, CPoint point);
 	void OriginalButtonDown(UINT nFlags, CPoint point);

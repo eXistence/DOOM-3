@@ -30,6 +30,7 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 */
 
 #include "RenderWidget.h"
+#include "RenderWindow.h"
 #include "../../renderer/tr_local.h"
 #include "../../sys/win32/win_local.h"
 #include "../../tools/radiant/GLWidget.h"
@@ -105,7 +106,7 @@ private:
 	bool enabled = false;
 };
 
-class fhLegacyRenderWindow : public QWindow {
+class fhLegacyRenderWindow : public fhRenderWindow {
 	bool mouseDown = false;
 	int prevX = 0;
 	int prevY = 0;
@@ -113,9 +114,8 @@ class fhLegacyRenderWindow : public QWindow {
 
 public:
 	fhLegacyRenderWindow(idGLDrawable **drawable, RenderCamera **camera, QWindow *parent = nullptr)
-		: QWindow(parent), m_context(nullptr), m_initialized(false), m_drawable(drawable), m_camera(camera) {
-
-		setSurfaceType(QWindow::OpenGLSurface);
+		: fhRenderWindow(parent), m_drawable(drawable), m_camera(camera) {
+		
 		this->eventFilter = new KeyEventFilter(camera, this);
 		this->installEventFilter(this->eventFilter);
 
@@ -141,27 +141,20 @@ public:
 		event->accept();
 	}
 
-	virtual void exposeEvent(QExposeEvent *) override {
-		if (isExposed())
-			render();
-	}
-
 	virtual void mouseMoveEvent(QMouseEvent *ev) override {
 		if (RenderCamera *camera = *m_camera) {
 			return;
 		}
 
 		if (ev->type() == QEvent::MouseMove && mouseDown) {
-			common->Printf("x=%d y=%d\n", ev->x(), ev->y());
 			(*m_drawable)->mouseMove(ev->x(), ev->y());
 		}
 	}
 
+
+
 	virtual bool event(QEvent *ev) override {
 		switch (ev->type()) {
-		case QEvent::UpdateRequest:
-			render();
-			break;
 		case QEvent::MouseButtonPress:
 			handleButton(dynamic_cast<QMouseEvent *>(ev));
 			break;
@@ -169,7 +162,7 @@ public:
 			handleButton(dynamic_cast<QMouseEvent *>(ev));
 			break;
 		};
-		return QWindow::event(ev);
+		return fhRenderWindow::event(ev);
 	}
 
 	void handleButton(QMouseEvent *ev) {
@@ -257,17 +250,7 @@ public:
 		}
 	}
 
-	void render() {
-		if (!m_initialized) {
-			init();
-			m_initialized = true;
-		}
-
-		if (!m_context)
-			return;
-
-		if (!m_context->makeCurrent(this))
-			return;
+	void render() override {		
 
 		const auto oldWindowWidth = glConfig.windowWidth;
 		const auto oldWindowHeight = glConfig.windowHeight;
@@ -294,10 +277,7 @@ public:
 		if (m_drawable && *m_drawable) {
 			(*m_drawable)->draw(1, 1, rect.width(), rect.height());
 		}
-
-		m_context->swapBuffers(this);
-		wglMakeCurrent(win32.hDC, win32.hGLRC);
-
+	
 		glConfig.windowWidth = oldWindowWidth;
 		glConfig.windowHeight = oldWindowHeight;
 		glConfig.vidWidth = oldVidWidth;
@@ -307,34 +287,7 @@ public:
 		glScissor(0, 0, glConfig.vidWidth, glConfig.vidHeight);
 	}
 
-private:
-	void init() {
-		auto ctx = win32.hGLRC;
-		auto hwnd = (HWND)this->winId();
-		auto hDC = GetDC(hwnd);
-
-		int pixelFormat = ChoosePixelFormat(hDC, &win32.pfd);
-		if (pixelFormat > 0) {
-			if (SetPixelFormat(hDC, pixelFormat, &win32.pfd) == NULL) {
-				int foo = 2;
-			}
-		}
-
-		ReleaseDC(hwnd, hDC);
-
-		m_context = new QOpenGLContext(this);
-		//		m_context->setFormat( requestedFormat() );
-		QWGLNativeContext nativeContext(ctx, hwnd);
-		m_context->setNativeHandle(QVariant::fromValue(nativeContext));
-
-		if (!m_context->create()) {
-			delete m_context;
-			m_context = 0;
-		}
-	}
-
-	QOpenGLContext *m_context;
-	bool m_initialized;
+private:	
 	idGLDrawable **m_drawable;
 	RenderCamera **m_camera;
 	QPoint m_previousCursorPos;
@@ -348,7 +301,7 @@ fhRenderWidget::fhRenderWidget(QWidget *parent) : QWidget(parent), m_drawable(nu
 	layout->setSpacing(0);
 
 	m_window = new fhLegacyRenderWindow(&m_drawable, &m_camera);
-	layout->addWidget(QWidget::createWindowContainer(m_window, this));
+	layout->addWidget(m_window->createContainingWidget(this));
 
 	this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 }
@@ -430,11 +383,11 @@ void KeyEventFilter::setEnabled(bool enabled) {
 	this->enabled = enabled;
 
 	if (enabled) {
-		common->Printf("enter fly mode");
+		common->Printf("enter fly mode\n");
 		parent->setCursor(Qt::BlankCursor);
 		centerMouse();
 	} else {
-		common->Printf("leave fly mode");
+		common->Printf("leave fly mode\n");
 		parent->unsetCursor();
 		forward = false;
 		backward = false;

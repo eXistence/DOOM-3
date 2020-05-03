@@ -498,7 +498,7 @@ void Brush_GetBounds(brush_t *b, idVec3 &mins, idVec3 &maxs) {
 MoveSelection
 ================
 */
-static void MoveSelection( const idVec3 &orgMove ) {
+void MoveSelection( const idVec3 &orgMove ) {
 	int		i, success;
 	brush_t *b;
 	CString strStatus;

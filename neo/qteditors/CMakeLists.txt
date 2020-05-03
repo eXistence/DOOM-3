@@ -25,13 +25,15 @@ set(SOURCES
   widgets/Vec3Edit.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../ads/src)
 add_force_include(precompiled.h SOURCES)
 add_msvc_precompiled_header(precompiled.h SOURCES)
 
 set(TARGET_NAME "qteditors")
 add_definitions(-DGLEW_STATIC -D__DOOM__ -D__DOOM_DLL__)
 add_library(${TARGET_NAME} STATIC ${SOURCES})
-add_dependencies(${TARGET_NAME} fhGame-x86 fhGame-roe-x86)
+add_dependencies(${TARGET_NAME} fhGame-x86)
+target_link_libraries(${TARGET_NAME} qtadvanceddocking)
 qt5_use_modules(${TARGET_NAME} Widgets)
 
 if(MSVC)

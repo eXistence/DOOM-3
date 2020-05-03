@@ -34,15 +34,60 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 #include "dialogs/OrthographicView.h"
 #include "dialogs/RenderPreview.h"
 
+#include "DockManager.h"
+
 #include <qstylefactory.h>
+#include <QMainWindow>
+
+
+class fhRadiant : public QMainWindow {	
+public:
+	explicit fhRadiant(RenderCamera* renderCamera, QWidget *parent = 0) : QMainWindow(parent) {
+		dockManager = new ads::CDockManager(this);
+		cameraView = new fhPreviewCamera(renderCamera, this);
+		orthographicView = new fhOrthographicView(this);
+
+		QLabel *l = new QLabel();
+		l->setWordWrap(true);
+		l->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+		l->setText("Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ");
+
+		addDockableView("label1", l, ads::LeftDockWidgetArea);
+		addDockableView("Camera View", cameraView, ads::LeftDockWidgetArea);
+		addDockableView("2D View", orthographicView, ads::RightDockWidgetArea);
+	}
+
+	~fhRadiant() { delete dockManager;
+	}
+
+	void update() {
+		cameraView->draw();
+		cameraView->repaint();
+
+		orthographicView->draw();
+		orthographicView->repaint();
+	}
+
+private:
+	ads::CDockAreaWidget* addDockableView(const char* name, QWidget *widget, ads::DockWidgetArea area) {
+		ads::CDockWidget* dockWidget = new ads::CDockWidget(name);
+		dockWidget->setWidget(widget);
+		return dockManager->addDockWidget(area, dockWidget);
+	}
+
+	fhPreviewCamera *cameraView;
+	fhOrthographicView *orthographicView;
+
+	ads::CDockManager *dockManager;
+};
+
 
 class RenderCamera;
 
 static QApplication *app = nullptr;
 static fhLightEditor *lightEditor = nullptr;
 static fhEfxEditor *efxEditor = nullptr;
-static fhPreviewCamera *previewCamera = nullptr;
-static fhOrthographicView *orthographicView = nullptr;
+static fhRadiant *radiant = nullptr;
 
 void QtRun() {
 	if (!app) {
@@ -50,7 +95,7 @@ void QtRun() {
 		char **argv = &name;
 		int argc = 1;
 		app = new QApplication(argc, argv);
-
+#if 0
 		app->setStyle(QStyleFactory::create("Fusion"));
 
 		QPalette darkPalette;
@@ -77,6 +122,7 @@ void QtRun() {
 		app->setPalette(darkPalette);
 
 		app->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
+#endif
 	}
 
 	if (efxEditor && efxEditor->isVisible()) {
@@ -107,29 +153,16 @@ void EfxEditorInit() {
 }
 
 void QtPreviewCamera(RenderCamera *renderCamera) {
-	if (!previewCamera) {
-		previewCamera = new fhPreviewCamera(renderCamera, nullptr);
+	if (!radiant) {
+		radiant = new fhRadiant(renderCamera, nullptr);
 	}
-	if (!orthographicView) {
-		orthographicView = new fhOrthographicView(nullptr);
-	}
-	orthographicView->show();
-	previewCamera->show();
-	previewCamera->setFocus();
+	radiant->show();
+	radiant->setFocus();
 }
 
 void QtPreviewCameraUpdate() {
-	if (orthographicView) {
-		orthographicView->draw();
-		orthographicView->repaint();
-	}
-
-	if (previewCamera) {
-		previewCamera->draw();
-		previewCamera->repaint();
-	}
-
-	if (orthographicView || previewCamera) {
+	if (radiant) {
+		radiant->update();
 		qApp->processEvents();
 	}
 }
