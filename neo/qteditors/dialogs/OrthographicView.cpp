@@ -30,10 +30,12 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 */
 
 #include "OrthographicView.h"
-#include "OrthographicWindow.h"
+#include "../tools/radiant/QE3.H"
 #include "../tools/radiant/XYWnd.h"
+#include "OrthographicWindow.h"
 #include <QMouseEvent>
 #include <QToolBar>
+#include <QMenu>
 
 fhOrthographicView::fhOrthographicView(QWidget *parent) : QWidget(parent) {
 	this->setWindowTitle("fhOrthgraphicView");
@@ -69,9 +71,23 @@ fhOrthographicView::fhOrthographicView(QWidget *parent) : QWidget(parent) {
 	renderWindow = new fhOrthoRenderWindow();
 	layout->addWidget(renderWindow->createContainingWidget(this));
 
+	QObject::connect(renderWindow, &fhOrthoRenderWindow::contextMenuRequested,
+					 [this](QPoint position) { showContextMenu(position); });
+
 	resize(QSize(600, 700));
 }
 
 fhOrthographicView::~fhOrthographicView() {}
 
 void fhOrthographicView::draw() { renderWindow->requestUpdate(); }
+
+void fhOrthographicView::showContextMenu(QPoint position) {
+
+	QMenu contextMenu(tr("Context menu"), this);
+
+	QAction action1("Remove Data Point", this);
+	connect(&action1, &QAction::triggered, []() { common->Printf("foobar\n"); });
+	contextMenu.addAction(&action1);
+
+	contextMenu.exec(renderWindow->mapToGlobal(position));
+}

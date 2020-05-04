@@ -44,5 +44,7 @@ public:
 	void draw();
 
 private:
+	void showContextMenu(QPoint position);
+
 	fhOrthoRenderWindow *renderWindow;
 };

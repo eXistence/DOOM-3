@@ -2,7 +2,6 @@
 #include "OrthographicRenderPass.h"
 #include <QMouseEvent>
 
-
 void MoveSelection(const idVec3 &orgMove);
 
 fhOrthoRenderWindow::fhOrthoRenderWindow() : camera(this) {}
@@ -161,6 +160,10 @@ void fhOrthoRenderWindow::mouseReleaseEvent(QMouseEvent *event) {
 	}
 
 	if (event->button() == Qt::RightButton) {
+		if (!rightDrag) {
+			contextMenuRequested(event->pos());
+		}
+
 		rightDrag = false;
 	}
 	requestUpdate();

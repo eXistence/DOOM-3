@@ -6,6 +6,7 @@
 
 
 class fhOrthoRenderWindow : public fhRenderWindow {
+	Q_OBJECT
 public:
 	fhOrthoRenderWindow();
 
@@ -15,6 +16,9 @@ public:
 	void mouseReleaseEvent(QMouseEvent *event) override;
 	void wheelEvent(QWheelEvent *event) override;
 	void cycleViewType();
+
+signals:
+	void contextMenuRequested(QPoint position);
 
 private:
 	void render() override;
