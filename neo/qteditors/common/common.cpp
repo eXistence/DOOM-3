@@ -38,12 +38,14 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
 #include <qstylefactory.h>
 #include <QMainWindow>
+#include <QFile>
 
 
 class fhRadiant : public QMainWindow {	
 public:
 	explicit fhRadiant(RenderCamera* renderCamera, QWidget *parent = 0) : QMainWindow(parent) {
 		dockManager = new ads::CDockManager(this);
+		dockManager->setStyleSheet("");
 		cameraView = new fhPreviewCamera(renderCamera, this);
 		orthographicView = new fhOrthographicView(this);
 
@@ -90,11 +92,22 @@ static fhEfxEditor *efxEditor = nullptr;
 static fhRadiant *radiant = nullptr;
 
 void QtRun() {
-	if (!app) {
+	if (!app) {	
+
 		static char *name = "foo";
 		char **argv = &name;
 		int argc = 1;
 		app = new QApplication(argc, argv);
+
+		Q_INIT_RESOURCE(fhradiant);
+		
+		QFile file(":/darkorange.css");
+		if (file.open(QFile::ReadOnly)) {
+			auto stylesheet = file.readAll();
+			app->setStyle("Fusion");
+			app->setStyleSheet(QString::fromLatin1(stylesheet));
+		}
+
 #if 0
 		app->setStyle(QStyleFactory::create("Fusion"));
 

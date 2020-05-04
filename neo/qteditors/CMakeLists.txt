@@ -1,14 +1,22 @@
+set(CMAKE_AUTORCC ON)
 
 set(SOURCES
   qteditors_public.h
   precompiled.h
+  fhradiant.qrc
   common/common.cpp  
   dialogs/EfxEditor.h
   dialogs/EfxEditor.cpp  
   dialogs/LightEditor.h
-  dialogs/LightEditor.cpp
+  dialogs/LightEditor.cpp  
+  dialogs/OrthographicCamera.h
+  dialogs/OrthographicCamera.cpp
+  dialogs/OrthographicRenderPass.h
+  dialogs/OrthographicRenderPass.cpp
   dialogs/OrthographicView.h
   dialogs/OrthographicView.cpp
+  dialogs/OrthographicWindow.h
+  dialogs/OrthographicWindow.cpp
   dialogs/RenderPreview.h
   dialogs/RenderPreview.cpp  
   widgets/RenderWidget.h

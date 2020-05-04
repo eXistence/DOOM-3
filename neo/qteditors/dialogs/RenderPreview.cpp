@@ -41,7 +41,9 @@ fhPreviewCamera::fhPreviewCamera(RenderCamera *renderCamera, QWidget *parent) : 
 	this->setWindowTitle("fhPreviewCamera");
 
 	QVBoxLayout *layout = new QVBoxLayout(this);
-	this->setLayout(layout);
+	layout->setMargin(0);
+	layout->setSpacing(0);
+	this->setLayout(layout);	
 
 	QToolBar *toolbar = new QToolBar(this);
 	layout->addWidget(toolbar);
