@@ -368,7 +368,7 @@ private:
 	int						numPVSAreas;						// number of renderer areas the entity covers
 	int						PVSAreas[MAX_PVS_AREAS];			// numbers of the renderer areas the entity covers
 
-	signalList_t *			signals;
+	signalList_t *			signalsList;
 
 	int						mpGUIState;							// local cache to avoid systematic SetStateInt
 

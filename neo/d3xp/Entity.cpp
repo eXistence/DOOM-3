@@ -423,7 +423,7 @@ idEntity::idEntity() {
 	bindBody		= -1;
 	teamMaster		= NULL;
 	teamChain		= NULL;
-	signals			= NULL;
+	signalsList			= NULL;
 
 	memset( PVSAreas, 0, sizeof( PVSAreas ) );
 	numPVSAreas		= -1;
@@ -643,8 +643,8 @@ idEntity::~idEntity( void ) {
 	delete renderView;
 	renderView = NULL;
 
-	delete signals;
-	signals = NULL;
+	delete signalsList;
+	signalsList = NULL;
 
 	FreeModelDef();
 	FreeSoundEmitter( false );
@@ -721,15 +721,15 @@ void idEntity::Save( idSaveGame *savefile ) const {
 		savefile->WriteInt( PVSAreas[ i ] );
 	}
 
-	if ( !signals ) {
+	if ( !signalsList ) {
 		savefile->WriteBool( false );
 	} else {
 		savefile->WriteBool( true );
 		for( i = 0; i < NUM_SIGNALS; i++ ) {
-			savefile->WriteInt( signals->signal[ i ].Num() );
-			for( j = 0; j < signals->signal[ i ].Num(); j++ ) {
-				savefile->WriteInt( signals->signal[ i ][ j ].threadnum );
-				savefile->WriteString( signals->signal[ i ][ j ].function->Name() );
+			savefile->WriteInt( signalsList->signal[ i ].Num() );
+			for( j = 0; j < signalsList->signal[ i ].Num(); j++ ) {
+				savefile->WriteInt( signalsList->signal[ i ][ j ].threadnum );
+				savefile->WriteString( signalsList->signal[ i ][ j ].function->Name() );
 			}
 		}
 	}
@@ -811,15 +811,15 @@ void idEntity::Restore( idRestoreGame *savefile ) {
 	bool readsignals;
 	savefile->ReadBool( readsignals );
 	if ( readsignals ) {
-		signals = new signalList_t;
+		signalsList = new signalList_t;
 		for( i = 0; i < NUM_SIGNALS; i++ ) {
 			savefile->ReadInt( num );
-			signals->signal[ i ].SetNum( num );
+			signalsList->signal[ i ].SetNum( num );
 			for( j = 0; j < num; j++ ) {
-				savefile->ReadInt( signals->signal[ i ][ j ].threadnum );
+				savefile->ReadInt( signalsList->signal[ i ][ j ].threadnum );
 				savefile->ReadString( funcname );
-				signals->signal[ i ][ j ].function = gameLocal.program.FindFunction( funcname );
-				if ( !signals->signal[ i ][ j ].function ) {
+				signalsList->signal[ i ][ j ].function = gameLocal.program.FindFunction( funcname );
+				if ( !signalsList->signal[ i ][ j ].function ) {
 					savefile->Error( "Function '%s' not found", funcname.c_str() );
 				}
 			}
@@ -3251,11 +3251,11 @@ idEntity::HasSignal
 ================
 */
 bool idEntity::HasSignal( signalNum_t signalnum ) const {
-	if ( !signals ) {
+	if ( !signalsList ) {
 		return false;
 	}
 	assert( ( signalnum >= 0 ) && ( signalnum < NUM_SIGNALS ) );
-	return ( signals->signal[ signalnum ].Num() > 0 );
+	return ( signalsList->signal[ signalnum ].Num() > 0 );
 }
 
 /*
@@ -3271,17 +3271,17 @@ void idEntity::SetSignal( signalNum_t signalnum, idThread *thread, const functio
 
 	assert( ( signalnum >= 0 ) && ( signalnum < NUM_SIGNALS ) );
 
-	if ( !signals ) {
-		signals = new signalList_t;
+	if ( !signalsList ) {
+		signalsList = new signalList_t;
 	}
 
 	assert( thread );
 	threadnum = thread->GetThreadNum();
 
-	num = signals->signal[ signalnum ].Num();
+	num = signalsList->signal[ signalnum ].Num();
 	for( i = 0; i < num; i++ ) {
-		if ( signals->signal[ signalnum ][ i ].threadnum == threadnum ) {
-			signals->signal[ signalnum ][ i ].function = function;
+		if ( signalsList->signal[ signalnum ][ i ].threadnum == threadnum ) {
+			signalsList->signal[ signalnum ][ i ].function = function;
 			return;
 		}
 	}
@@ -3292,7 +3292,7 @@ void idEntity::SetSignal( signalNum_t signalnum, idThread *thread, const functio
 
 	sig.threadnum = threadnum;
 	sig.function = function;
-	signals->signal[ signalnum ].Append( sig );
+	signalsList->signal[ signalnum ].Append( sig );
 }
 
 /*
@@ -3306,11 +3306,11 @@ void idEntity::ClearSignal( idThread *thread, signalNum_t signalnum ) {
 		gameLocal.Error( "Signal out of range" );
 	}
 
-	if ( !signals ) {
+	if ( !signalsList ) {
 		return;
 	}
 
-	signals->signal[ signalnum ].Clear();
+	signalsList->signal[ signalnum ].Clear();
 }
 
 /*
@@ -3329,16 +3329,16 @@ void idEntity::ClearSignalThread( signalNum_t signalnum, idThread *thread ) {
 		gameLocal.Error( "Signal out of range" );
 	}
 
-	if ( !signals ) {
+	if ( !signalsList ) {
 		return;
 	}
 
 	threadnum = thread->GetThreadNum();
 
-	num = signals->signal[ signalnum ].Num();
+	num = signalsList->signal[ signalnum ].Num();
 	for( i = 0; i < num; i++ ) {
-		if ( signals->signal[ signalnum ][ i ].threadnum == threadnum ) {
-			signals->signal[ signalnum ].RemoveIndex( i );
+		if ( signalsList->signal[ signalnum ][ i ].threadnum == threadnum ) {
+			signalsList->signal[ signalnum ].RemoveIndex( i );
 			return;
 		}
 	}
@@ -3357,7 +3357,7 @@ void idEntity::Signal( signalNum_t signalnum ) {
 
 	assert( ( signalnum >= 0 ) && ( signalnum < NUM_SIGNALS ) );
 
-	if ( !signals ) {
+	if ( !signalsList ) {
 		return;
 	}
 
@@ -3365,13 +3365,13 @@ void idEntity::Signal( signalNum_t signalnum ) {
 	// to end any of the threads in the list.  By copying the list
 	// we don't have to worry about the list changing as we're
 	// processing it.
-	num = signals->signal[ signalnum ].Num();
+	num = signalsList->signal[ signalnum ].Num();
 	for( i = 0; i < num; i++ ) {
-		sigs[ i ] = signals->signal[ signalnum ][ i ];
+		sigs[ i ] = signalsList->signal[ signalnum ][ i ];
 	}
 
 	// clear out the signal list so that we don't get into an infinite loop
-	signals->signal[ signalnum ].Clear();
+	signalsList->signal[ signalnum ].Clear();
 
 	for( i = 0; i < num; i++ ) {
 		thread = idThread::GetThread( sigs[ i ].threadnum );
@@ -3392,7 +3392,7 @@ void idEntity::SignalEvent( idThread *thread, signalNum_t signalnum ) {
 		gameLocal.Error( "Signal out of range" );
 	}
 
-	if ( !signals ) {
+	if ( !signalsList ) {
 		return;
 	}
 
