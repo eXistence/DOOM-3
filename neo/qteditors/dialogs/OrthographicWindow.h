@@ -1,9 +1,8 @@
 #pragma once
 
-#include "OrthographicView.h"
-#include "OrthographicCamera.h"
 #include "../widgets/RenderWindow.h"
-
+#include "OrthographicCamera.h"
+#include "OrthographicView.h"
 
 class fhOrthoRenderWindow : public fhRenderWindow {
 	Q_OBJECT
@@ -16,6 +15,13 @@ public:
 	void mouseReleaseEvent(QMouseEvent *event) override;
 	void wheelEvent(QWheelEvent *event) override;
 	void cycleViewType();
+
+	void dragEnterEvent(QDragEnterEvent *event);
+	void dragMoveEvent(QDragMoveEvent *event);
+	void dragLeaveEvent(QDragLeaveEvent *event);
+	void dropEvent(QDropEvent *event);
+
+	bool eventFilter(QObject *obj, QEvent *event) override;
 
 signals:
 	void contextMenuRequested(QPoint position);

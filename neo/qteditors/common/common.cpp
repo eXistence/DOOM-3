@@ -31,58 +31,10 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 
 #include "dialogs/EfxEditor.h"
 #include "dialogs/LightEditor.h"
-#include "dialogs/OrthographicView.h"
-#include "dialogs/RenderPreview.h"
+#include "dialogs/Radiant.h"
 
-#include "DockManager.h"
-
-#include <qstylefactory.h>
-#include <QMainWindow>
 #include <QFile>
-
-
-class fhRadiant : public QMainWindow {	
-public:
-	explicit fhRadiant(RenderCamera* renderCamera, QWidget *parent = 0) : QMainWindow(parent) {
-		dockManager = new ads::CDockManager(this);
-		dockManager->setStyleSheet("");
-		cameraView = new fhPreviewCamera(renderCamera, this);
-		orthographicView = new fhOrthographicView(this);
-
-		QLabel *l = new QLabel();
-		l->setWordWrap(true);
-		l->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-		l->setText("Lorem ipsum dolor sit amet, consectetuer adipiscing elit. ");
-
-		addDockableView("label1", l, ads::LeftDockWidgetArea);
-		addDockableView("Camera View", cameraView, ads::LeftDockWidgetArea);
-		addDockableView("2D View", orthographicView, ads::RightDockWidgetArea);
-	}
-
-	~fhRadiant() { delete dockManager;
-	}
-
-	void update() {
-		cameraView->draw();
-		cameraView->repaint();
-
-		orthographicView->draw();
-		orthographicView->repaint();
-	}
-
-private:
-	ads::CDockAreaWidget* addDockableView(const char* name, QWidget *widget, ads::DockWidgetArea area) {
-		ads::CDockWidget* dockWidget = new ads::CDockWidget(name);
-		dockWidget->setWidget(widget);
-		return dockManager->addDockWidget(area, dockWidget);
-	}
-
-	fhPreviewCamera *cameraView;
-	fhOrthographicView *orthographicView;
-
-	ads::CDockManager *dockManager;
-};
-
+#include <qstylefactory.h>
 
 class RenderCamera;
 
@@ -92,7 +44,7 @@ static fhEfxEditor *efxEditor = nullptr;
 static fhRadiant *radiant = nullptr;
 
 void QtRun() {
-	if (!app) {	
+	if (!app) {
 
 		static char *name = "foo";
 		char **argv = &name;
@@ -100,7 +52,7 @@ void QtRun() {
 		app = new QApplication(argc, argv);
 
 		Q_INIT_RESOURCE(fhradiant);
-		
+
 		QFile file(":/darkorange.css");
 		if (file.open(QFile::ReadOnly)) {
 			auto stylesheet = file.readAll();

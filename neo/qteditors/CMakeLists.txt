@@ -6,7 +6,11 @@ set(SOURCES
   fhradiant.qrc
   common/common.cpp  
   dialogs/EfxEditor.h
-  dialogs/EfxEditor.cpp  
+  dialogs/EfxEditor.cpp
+  dialogs/EntityBrowser.h
+  dialogs/EntityBrowser.cpp
+  dialogs/EntityTreeModel.h
+  dialogs/EntityTreeModel.cpp
   dialogs/LightEditor.h
   dialogs/LightEditor.cpp  
   dialogs/OrthographicCamera.h
@@ -17,6 +21,8 @@ set(SOURCES
   dialogs/OrthographicView.cpp
   dialogs/OrthographicWindow.h
   dialogs/OrthographicWindow.cpp
+  dialogs/Radiant.h
+  dialogs/Radiant.cpp  
   dialogs/RenderPreview.h
   dialogs/RenderPreview.cpp  
   widgets/RenderWidget.h

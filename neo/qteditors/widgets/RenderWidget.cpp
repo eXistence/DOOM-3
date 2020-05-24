@@ -30,12 +30,12 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 */
 
 #include "RenderWidget.h"
-#include "RenderWindow.h"
 #include "../../renderer/tr_local.h"
 #include "../../sys/win32/win_local.h"
 #include "../../tools/radiant/GLWidget.h"
 #include "../tools/radiant/GLWidget.h"
 #include "../tools/radiant/QE3.H"
+#include "RenderWindow.h"
 #include "qopenglcontext.h"
 #include "qwindow.h"
 #include <QCursor>
@@ -76,11 +76,10 @@ protected:
 		case QEvent::MouseButtonDblClick:
 			if (((QMouseEvent *)event)->button() == Qt::LeftButton) {
 				setEnabled(false);
-				break;
-			}			
-		default:
-			return QObject::eventFilter(obj, event);
+				return true;
+			}
 		}
+		return QObject::eventFilter(obj, event);
 	}
 
 private:
@@ -115,7 +114,7 @@ class fhLegacyRenderWindow : public fhRenderWindow {
 public:
 	fhLegacyRenderWindow(idGLDrawable **drawable, RenderCamera **camera, QWindow *parent = nullptr)
 		: fhRenderWindow(parent), m_drawable(drawable), m_camera(camera) {
-		
+
 		this->eventFilter = new KeyEventFilter(camera, this);
 		this->installEventFilter(this->eventFilter);
 
@@ -150,8 +149,6 @@ public:
 			(*m_drawable)->mouseMove(ev->x(), ev->y());
 		}
 	}
-
-
 
 	virtual bool event(QEvent *ev) override {
 		switch (ev->type()) {
@@ -250,7 +247,7 @@ public:
 		}
 	}
 
-	void render() override {		
+	void render() override {
 
 		const auto oldWindowWidth = glConfig.windowWidth;
 		const auto oldWindowHeight = glConfig.windowHeight;
@@ -277,7 +274,7 @@ public:
 		if (m_drawable && *m_drawable) {
 			(*m_drawable)->draw(1, 1, rect.width(), rect.height());
 		}
-	
+
 		glConfig.windowWidth = oldWindowWidth;
 		glConfig.windowHeight = oldWindowHeight;
 		glConfig.vidWidth = oldVidWidth;
@@ -287,7 +284,7 @@ public:
 		glScissor(0, 0, glConfig.vidWidth, glConfig.vidHeight);
 	}
 
-private:	
+private:
 	idGLDrawable **m_drawable;
 	RenderCamera **m_camera;
 	QPoint m_previousCursorPos;

@@ -28,9 +28,7 @@ idVec3 fhOrthoCamera::WindowCoordsToPoint(int x, int y, float xyz, bool alignToG
 	}
 
 	if (alignToGrid) {
-		for (int i = 0; i < 3; ++i) {
-			point[i] = floor(point[i] / g_qeglobals.d_gridsize + 0.5) * g_qeglobals.d_gridsize;
-		}
+		point = SnapToGrid(point);
 	}
 
 	return point;
@@ -46,6 +44,17 @@ idVec3 fhOrthoCamera::WindowCoordsToPoint(QPoint p, bool alignToGrid) const {
 
 idVec3 fhOrthoCamera::WindowCoordsToPoint(QPoint p, float xyz, bool alignToGrid) const {
 	return WindowCoordsToPoint(p.x(), p.y(), xyz, alignToGrid);
+}
+
+idVec3 fhOrthoCamera::SnapToGrid(idVec3 point) const {
+	for (int i = 0; i < 3; ++i) {
+		point[i] = SnapToGrid(point[i]);
+	}
+	return point;
+}
+
+float fhOrthoCamera::SnapToGrid(float f) const {
+	return floor(f / g_qeglobals.d_gridsize + 0.5) * g_qeglobals.d_gridsize;
 }
 
 idVec3 fhOrthoCamera::GetDirection() const {

@@ -64,6 +64,7 @@ struct entity_t {
 	void		SetKeyVec3( const char *key, idVec3 v );
 	void		SetKeyMat3( const char *key, idMat3 m );
 	bool		GetMatrixForKey( const char *key, idMat3 &mat );
+	bool    HasVec3ForKey(const char *key);
 
 	void		UpdateSoundEmitter();
 	idCurve<idVec3>* MakeCurve();

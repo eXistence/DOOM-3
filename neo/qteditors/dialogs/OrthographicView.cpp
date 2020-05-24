@@ -33,12 +33,14 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 #include "../tools/radiant/QE3.H"
 #include "../tools/radiant/XYWnd.h"
 #include "OrthographicWindow.h"
+#include <QDropEvent>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QToolBar>
-#include <QMenu>
+
 
 fhOrthographicView::fhOrthographicView(QWidget *parent) : QWidget(parent) {
-	this->setWindowTitle("fhOrthgraphicView");
+	this->setWindowTitle("2D View");
 
 	QVBoxLayout *layout = new QVBoxLayout(this);
 	layout->setMargin(0);
@@ -48,20 +50,10 @@ fhOrthographicView::fhOrthographicView(QWidget *parent) : QWidget(parent) {
 	QToolBar *toolbar = new QToolBar(this);
 	layout->addWidget(toolbar);
 
-	QAction *deselect = toolbar->addAction("deselect");
-	deselect->setShortcut(QKeySequence(Qt::Key_Escape));
 
 	QAction *cycleViewType = toolbar->addAction("cycle");
 	cycleViewType->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Tab));
 
-	QAction *remove = toolbar->addAction("remove");
-	QList<QKeySequence> shortcuts;
-	shortcuts << QKeySequence(Qt::Key_Backspace) << QKeySequence(Qt::Key_Delete);
-	remove->setShortcuts(shortcuts);
-
-	QObject::connect(deselect, &QAction::triggered, [=]() { Select_Deselect(); });
-
-	QObject::connect(remove, &QAction::triggered, [=]() { Select_Delete(); });
 
 	QObject::connect(cycleViewType, &QAction::triggered, [this]() {
 		renderWindow->cycleViewType();
@@ -69,11 +61,14 @@ fhOrthographicView::fhOrthographicView(QWidget *parent) : QWidget(parent) {
 	});
 
 	renderWindow = new fhOrthoRenderWindow();
-	layout->addWidget(renderWindow->createContainingWidget(this));
+	auto renderWindowWidget = renderWindow->createContainingWidget(this);
+	renderWindowWidget->installEventFilter(renderWindow);
+	renderWindowWidget->setAcceptDrops(true);		
+	layout->addWidget(renderWindowWidget);
 
 	QObject::connect(renderWindow, &fhOrthoRenderWindow::contextMenuRequested,
 					 [this](QPoint position) { showContextMenu(position); });
-
+	
 	resize(QSize(600, 700));
 }
 

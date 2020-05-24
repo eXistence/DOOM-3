@@ -38,27 +38,12 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 #include <QToolBar>
 
 fhPreviewCamera::fhPreviewCamera(RenderCamera *renderCamera, QWidget *parent) : QWidget(parent) {
-	this->setWindowTitle("fhPreviewCamera");
+	this->setWindowTitle("Camera View");
 
 	QVBoxLayout *layout = new QVBoxLayout(this);
 	layout->setMargin(0);
 	layout->setSpacing(0);
 	this->setLayout(layout);	
-
-	QToolBar *toolbar = new QToolBar(this);
-	layout->addWidget(toolbar);
-
-	QAction *deselect = toolbar->addAction("deselect");
-	deselect->setShortcut(QKeySequence(Qt::Key_Escape));
-
-	QAction *remove = toolbar->addAction("remove");	
-	QList<QKeySequence> shortcuts;
-	shortcuts << QKeySequence(Qt::Key_Backspace) << QKeySequence(Qt::Key_Delete);
-	remove->setShortcuts(shortcuts);	
-
-	QObject::connect(deselect, &QAction::triggered, [=]() { Select_Deselect(); });
-
-	QObject::connect(remove, &QAction::triggered, [=]() { Select_Deselect(); });
 
 	this->renderWidget = new fhRenderWidget(this);
 	this->renderWidget->setCamera(renderCamera);

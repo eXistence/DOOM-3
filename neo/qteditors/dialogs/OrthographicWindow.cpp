@@ -1,8 +1,97 @@
 #include "OrthographicWindow.h"
 #include "OrthographicRenderPass.h"
+#include <QDropEvent>
+#include <QMimeData>
 #include <QMouseEvent>
 
 void MoveSelection(const idVec3 &orgMove);
+
+namespace fh {
+
+brush_t *CreateEntityBrush(QPoint point, const fhOrthoCamera &camera) {	
+	idVec3 origin = camera.WindowCoordsToPoint(point, true);
+	const int nDim = camera.GetDirectionAxisIndex();
+	origin[nDim] = camera.SnapToGrid((g_qeglobals.d_new_brush_bottom[nDim] + g_qeglobals.d_new_brush_top[nDim]) / 2);
+
+	idVec3 mins = origin - idVec3(16, 16, 16);
+	idVec3 maxs = origin + idVec3(16, 16, 16);
+
+	brush_t *n = Brush_Create(mins, maxs, &g_qeglobals.d_texturewin.texdef);
+	if (n) {
+		Brush_AddToList(n, &selected_brushes);
+		Entity_LinkBrush(world_entity, n);
+		Brush_Build(n);
+	}
+
+	return n;
+}
+
+void CreateEntityFromName(const char *pName, bool forceFixed, idVec3 min, idVec3 max, idVec3 org) {
+	if (stricmp(pName, "worldspawn") == 0) {
+		common->Printf("Can't create an entity with worldspawn.");
+		return;
+	}
+
+	eclass_t *entityClass = Eclass_ForName(pName, false);
+	/*
+	if ((GetAsyncKeyState(VK_SHIFT) & 0x8000)) {
+		Select_Ungroup();
+	}
+	*/
+
+	// create it
+	entity_t *petNew = Entity_Create(entityClass, forceFixed);
+
+	if (petNew && idStr::Icmp(pName, "light") == 0) {
+		idVec3 rad = max - min;
+		rad *= 0.5;
+		if (rad.x != 0 && rad.y != 0 && rad.z != 0) {
+			petNew->SetKeyValue("light_radius",
+								va("%g %g %g", idMath::Fabs(rad.x), idMath::Fabs(rad.y), idMath::Fabs(rad.z)));
+			petNew->DeleteKey("light");
+		}
+	}
+
+	if (petNew == NULL) {
+		if (!((selected_brushes.next == &selected_brushes) || (selected_brushes.next->next != &selected_brushes))) {
+			brush_t *b = selected_brushes.next;
+			if (b->owner != world_entity && ((b->owner->eclass->fixedsize && entityClass->fixedsize) || forceFixed)) {
+				idVec3 mins, maxs;
+				idVec3 origin;
+				for (int i = 0; i < 3; i++) {
+					origin[i] = b->mins[i] - entityClass->mins[i];
+				}
+
+				VectorAdd(entityClass->mins, origin, mins);
+				VectorAdd(entityClass->maxs, origin, maxs);
+
+				brush_t *nb = Brush_Create(mins, maxs, &entityClass->texdef);
+				Entity_LinkBrush(b->owner, nb);
+				nb->owner->eclass = entityClass;
+				nb->owner->SetKeyValue("classname", pName);
+				Brush_Free(b);
+				Brush_Build(nb);
+				Brush_AddToList(nb, &active_brushes);
+				Select_Brush(nb);
+				return;
+			}
+		}
+
+		g_pParentWnd->MessageBox("Failed to create entity.", "info", 0);
+		return;
+	}
+
+	Select_Deselect();
+
+	//
+	// entity_t* pEntity = world_entity; if (selected_brushes.next !=
+	// &selected_brushes) pEntity = selected_brushes.next->owner;
+	//
+	Select_Brush(petNew->brushes.onext);
+	Brush_Build(petNew->brushes.onext);
+}
+
+} // namespace fh
 
 fhOrthoRenderWindow::fhOrthoRenderWindow() : camera(this) {}
 
@@ -104,8 +193,8 @@ void fhOrthoRenderWindow::mouseMoveEvent(QMouseEvent *event) {
 			if (dragNewBrush) {
 				DragNewBrush(leftButtonDown, event->pos());
 			} else {
-				idVec3 previous = camera.WindowCoordsToPoint(leftButtonDown, false);
-				idVec3 current = camera.WindowCoordsToPoint(event->pos(), false);
+				idVec3 previous = camera.WindowCoordsToPoint(leftButtonDown, true);
+				idVec3 current = camera.WindowCoordsToPoint(event->pos(), true);
 				idVec3 delta = current - previous;
 				leftButtonDown = event->pos();
 
@@ -179,6 +268,49 @@ void fhOrthoRenderWindow::wheelEvent(QWheelEvent *event) {
 	requestUpdate();
 
 	event->accept();
+}
+
+bool fhOrthoRenderWindow::eventFilter(QObject *obj, QEvent *event) {
+	switch (event->type()) {
+	case QEvent::DragEnter:
+		dragEnterEvent(static_cast<QDragEnterEvent *>(event));
+		break;
+	case QEvent::DragMove:
+		dragMoveEvent(static_cast<QDragMoveEvent *>(event));
+		break;
+	case QEvent::DragLeave:
+		dragLeaveEvent(static_cast<QDragLeaveEvent *>(event));
+		break;
+	case QEvent::Drop:
+		dropEvent(static_cast<QDropEvent *>(event));
+		break;
+	}
+	return fhRenderWindow::eventFilter(obj, event);
+}
+
+void fhOrthoRenderWindow::dragEnterEvent(QDragEnterEvent *event) {}
+void fhOrthoRenderWindow::dragMoveEvent(QDragMoveEvent *event) {}
+void fhOrthoRenderWindow::dragLeaveEvent(QDragLeaveEvent *event) {}
+void fhOrthoRenderWindow::dropEvent(QDropEvent *event) {
+	Select_Deselect();
+
+	QString text = event->mimeData()->text();
+	QByteArray ba = text.toLocal8Bit();
+	idVec3 pos = camera.WindowCoordsToPoint(event->pos(), true);
+	common->Printf("create entitiy: %s at (%f %f %f)\n", ba.data(), pos.x, pos.y, pos.z);
+
+	idVec3 min, max, org;
+	Select_GetBounds(min, max);
+	Select_GetMid(org);
+
+	if (selected_brushes.next == &selected_brushes) {
+		fh::CreateEntityBrush(event->pos(), camera);
+		min.Zero();
+		max.Zero();
+		fh::CreateEntityFromName(ba.data(), true, min, max, org);
+	} else {
+		fh::CreateEntityFromName(ba.data(), false, min, max, org);
+	}
 }
 
 void fhOrthoRenderWindow::cycleViewType() { camera.cycleViewType(); }

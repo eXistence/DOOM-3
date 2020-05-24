@@ -1461,10 +1461,10 @@ void CXYWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 
 //
 // =======================================================================================================================
-//    FIXME: the brush_t *pBrush is never used. ( Entity_Create uses selected_brushes )
+//    Entity_Create uses selected_brushes as parent brush
 // =======================================================================================================================
 //
-void CreateEntityFromName(char *pName, brush_t *pBrush, bool forceFixed, idVec3 min, idVec3 max, idVec3 org) {
+void CreateEntityFromName(const char *pName, bool forceFixed, idVec3 min, idVec3 max, idVec3 org) {
 	eclass_t	*pecNew;
 	entity_t	*petNew;
 	if (stricmp(pName, "orldspawn") == 0) {
@@ -1588,17 +1588,15 @@ void CreateRightClickEntity(CXYWnd *pWnd, int x, int y, char *pName) {
 
 	CRect	rctZ;
 	pWnd->GetClientRect(rctZ);
-
-	brush_t *pBrush;
+	
 	if (selected_brushes.next == &selected_brushes) {
-		pBrush = CreateEntityBrush(x, rctZ.Height() - 1 - y, pWnd);
+		CreateEntityBrush(x, rctZ.Height() - 1 - y, pWnd);
 		min.Zero();
 		max.Zero();
-		CreateEntityFromName(pName, pBrush, true, min, max, org);
+		CreateEntityFromName(pName, true, min, max, org);
 	}
-	else {
-		pBrush = selected_brushes.next;
-		CreateEntityFromName(pName, pBrush, false, min, max, org);
+	else {		
+		CreateEntityFromName(pName, false, min, max, org);
 	}
 }
 

@@ -191,6 +191,12 @@ bool entity_t::GetVectorForKey(const char *key, idVec3 &vec) {
 	return false;
 }
 
+
+bool entity_t::HasVec3ForKey(const char *key) {
+	idVec3 temp;
+	return GetVectorForKey(key, temp);
+}
+
 /*
  =======================================================================================================================
  =======================================================================================================================

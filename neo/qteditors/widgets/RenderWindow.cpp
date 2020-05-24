@@ -65,5 +65,6 @@ void fhRenderWindow::init() {
 }
 
 QWidget *fhRenderWindow::createContainingWidget(QWidget* parent) {
-	return QWidget::createWindowContainer(this, parent);
+	QWidget *widget = QWidget::createWindowContainer(this, parent);		
+	return widget;
 }
