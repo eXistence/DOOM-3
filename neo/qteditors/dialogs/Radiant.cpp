@@ -5,6 +5,7 @@
 #include <QToolBar>
 
 #include "dialogs/EntityBrowser.h"
+#include "dialogs/MaterialBrowser.h"
 #include "dialogs/OrthographicView.h"
 #include "dialogs/RenderPreview.h"
 
@@ -17,6 +18,7 @@ fhRadiant::fhRadiant(RenderCamera *renderCamera, QWidget *parent) : QMainWindow(
 	cameraView = new fhPreviewCamera(renderCamera, this);
 	orthographicView = new fhOrthographicView(this);
 	entityBrowser = new fhEntityBrowser(this);
+	materialBrowser = new fhMaterialBrowser(this);
 
 	QToolBar *toolbar = addToolBar(tr("File"));	
 	QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
@@ -47,6 +49,7 @@ fhRadiant::fhRadiant(RenderCamera *renderCamera, QWidget *parent) : QMainWindow(
 	addDockableView(cameraView->windowTitle(), cameraView, ads::LeftDockWidgetArea);
 	addDockableView(orthographicView->windowTitle(), orthographicView, ads::RightDockWidgetArea);
 	addDockableView(entityBrowser->windowTitle(), entityBrowser, ads::RightDockWidgetArea);
+	addDockableView(materialBrowser->windowTitle(), materialBrowser, ads::RightDockWidgetArea);
 }
 
 fhRadiant::~fhRadiant() { delete dockManager; }

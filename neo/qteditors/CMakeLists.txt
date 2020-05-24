@@ -13,6 +13,10 @@ set(SOURCES
   dialogs/EntityTreeModel.cpp
   dialogs/LightEditor.h
   dialogs/LightEditor.cpp  
+  dialogs/MaterialBrowser.h
+  dialogs/MaterialBrowser.cpp
+  dialogs/MaterialTreeModel.h
+  dialogs/MaterialTreeModel.cpp
   dialogs/OrthographicCamera.h
   dialogs/OrthographicCamera.cpp
   dialogs/OrthographicRenderPass.h

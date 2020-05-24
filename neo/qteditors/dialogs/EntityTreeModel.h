@@ -4,20 +4,19 @@
 
 enum class EntityColumns { Name, EntityClassName, Location, COUNT };
 
-class fhEntityTreeModelItem {
+template <typename ItemType, typename Columns> class fhDeclTreeItem {
 public:
-	explicit fhEntityTreeModelItem(const QString &displayName, const QString &entityClassName, const QString &location)
-		: name(displayName), entityClassName(entityClassName), location(location) {}
+	explicit fhDeclTreeItem(const QString &name, const QString &file) : name(name), file(file) {}
 
-	void addChild(fhEntityTreeModelItem *child) {
+	void addChild(ItemType *child) {
 		if (child->parent) {
 			child->parent->childs.removeAll(child);
 		}
-		child->parent = this;
+		child->parent = static_cast<ItemType *>(this);
 		childs.append(child);
 	}
 
-	fhEntityTreeModelItem *child(int row) {
+	ItemType *child(int row) {
 		if (row < 0 || row >= childs.size()) {
 			return nullptr;
 		}
@@ -25,35 +24,21 @@ public:
 	}
 
 	int childCount() const { return childs.size(); }
-	int columnCount() const { return static_cast<int>(EntityColumns::COUNT); }
+	int columnCount() const { return static_cast<int>(Columns::COUNT); }
 
-	QVariant data(int column) const {
-		if (column == static_cast<int>(EntityColumns::Name)) {
-			return QVariant(name);
-		}
-
-		if (column == static_cast<int>(EntityColumns::EntityClassName)) {
-			return QVariant(entityClassName);
-		}
-
-		if (column == static_cast<int>(EntityColumns::Location)) {
-			return QVariant(location);
-		}
-
-		return QVariant();
-	}
+	virtual QVariant data(Columns column) const = 0;
 
 	int row() const {
 		if (!parent) {
 			return 0;
 		}
 
-		return parent->childs.indexOf(const_cast<fhEntityTreeModelItem *>(this));
+		return parent->childs.indexOf(const_cast<ItemType *>(static_cast<const ItemType *>(this)));
 	}
 
-	fhEntityTreeModelItem *parentItem() { return parent; }
+	ItemType *parentItem() { return parent; }
 
-	fhEntityTreeModelItem *findItemByName(const QString &name) {
+	ItemType *findItemByName(const QString &name) {
 		for (auto c : childs) {
 			if (c->name == name) {
 				return c;
@@ -62,17 +47,39 @@ public:
 		return nullptr;
 	}
 
-private:
+protected:
 	QString name;
+	QString file;
+	ItemType *parent = nullptr;
+	QVector<ItemType *> childs;
+};
+
+class fhEntityTreeModelItem : public fhDeclTreeItem<fhEntityTreeModelItem, EntityColumns> {
+public:
+	explicit fhEntityTreeModelItem(const QString &displayName, const QString &entityClassName, const QString &file)
+		: fhDeclTreeItem(displayName, file), entityClassName(entityClassName) {}
+
+	QVariant data(EntityColumns column) const override {
+		if (column == EntityColumns::Name) {
+			return QVariant(name);
+		}
+
+		if (column == EntityColumns::EntityClassName) {
+			return QVariant(entityClassName);
+		}
+
+		if (column == EntityColumns::Location) {
+			return QVariant(file);
+		}
+
+		return QVariant();
+	}
+
+private:
 	QString entityClassName;
-	QString location;
-	fhEntityTreeModelItem *parent = nullptr;
-	QVector<fhEntityTreeModelItem *> childs;
 };
 
 class fhEntityTreeModel : public QAbstractItemModel {
-	Q_OBJECT
-
 public:
 	explicit fhEntityTreeModel(QObject *parent = nullptr);
 	~fhEntityTreeModel();

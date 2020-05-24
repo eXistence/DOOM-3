@@ -8,6 +8,7 @@ class RenderCamera;
 class fhPreviewCamera;
 class fhOrthographicView;
 class fhEntityBrowser;
+class fhMaterialBrowser;
 
 class fhRadiant : public QMainWindow {
 public:
@@ -22,6 +23,7 @@ private:
 	fhPreviewCamera *cameraView;
 	fhOrthographicView *orthographicView;
 	fhEntityBrowser *entityBrowser;
+	fhMaterialBrowser *materialBrowser;
 
 	ads::CDockManager *dockManager;
 };

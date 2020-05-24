@@ -36,7 +36,7 @@ QVariant fhEntityTreeModel::data(const QModelIndex &index, int role) const {
 
 	fhEntityTreeModelItem *item = static_cast<fhEntityTreeModelItem *>(index.internalPointer());
 
-	return item->data(index.column());
+	return item->data(static_cast<EntityColumns>(index.column()));
 }
 
 Qt::ItemFlags fhEntityTreeModel::flags(const QModelIndex &index) const {
@@ -48,7 +48,7 @@ Qt::ItemFlags fhEntityTreeModel::flags(const QModelIndex &index) const {
 
 QVariant fhEntityTreeModel::headerData(int section, Qt::Orientation orientation, int role) const {
 	if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
-		return rootItem->data(section);
+		return rootItem->data(static_cast<EntityColumns>(section));
 
 	return QVariant();
 }
