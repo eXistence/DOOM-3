@@ -62,9 +62,12 @@ public:
   void Color4f(float r, float g, float b, float a);
   void Color4fv(const float* c);
   void Color4ubv(const byte* bytes);
+  void Color(idVec3 color) { Color3fv(color.ToFloatPtr()); }
+  void Color(idVec4 color) { Color4fv(color.ToFloatPtr()); }
   void Vertex3fv(const float* c);
   void Vertex3f(float x, float y, float z);
   void Vertex2f(float x, float y);
+  void Vertex(idVec3 v) { Vertex3fv(v.ToFloatPtr());  }  
   void End();
 
   void Sphere(float radius, int rings, int sectors, bool inverse = false);

@@ -5,6 +5,8 @@ set(SOURCES
   precompiled.h
   fhradiant.qrc
   common/common.cpp  
+  dialogs/EditorSession.h
+  dialogs/EditorSession.cpp
   dialogs/EfxEditor.h
   dialogs/EfxEditor.cpp
   dialogs/EntityBrowser.h
@@ -17,6 +19,10 @@ set(SOURCES
   dialogs/MaterialBrowser.cpp
   dialogs/MaterialTreeModel.h
   dialogs/MaterialTreeModel.cpp
+  dialogs/MaterialWindow.h
+  dialogs/MaterialWindow.cpp
+  dialogs/MaterialsView.h
+  dialogs/MaterialsView.cpp
   dialogs/OrthographicCamera.h
   dialogs/OrthographicCamera.cpp
   dialogs/OrthographicRenderPass.h

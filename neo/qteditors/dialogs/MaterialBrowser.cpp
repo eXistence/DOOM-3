@@ -1,5 +1,6 @@
 #include "MaterialBrowser.h"
 #include <QDrag>
+#include <QMenu>
 #include <QMimeData>
 #include <QSortFilterProxyModel>
 #include <QTreeView>
@@ -29,6 +30,27 @@ fhMaterialBrowser::fhMaterialBrowser(QWidget *parent) : QWidget(parent) {
 	view->setDragDropMode(QAbstractItemView::DragOnly);
 	view->setModel(proxyModel);
 	view->setSelectionBehavior(QAbstractItemView::SelectRows);
+	view->setContextMenuPolicy(Qt::CustomContextMenu);
+
+	contextMenu = new QMenu(view);
+	loadMaterialsAction = new QAction("load");
+	QObject::connect(loadMaterialsAction, &QAction::triggered, [this]() {
+		auto index = loadMaterialsAction->data().toModelIndex();
+		if (index.isValid()) {
+			loadMaterialsRequested(model->getChildMaterials(index));
+		}
+	});
+	contextMenu->addAction(loadMaterialsAction);
+
+	QObject::connect(view, &QTreeView::customContextMenuRequested, [this, view, proxyModel](const QPoint &point) {
+		const QModelIndex index = view->indexAt(point);
+		if (!index.isValid()) {
+			return;
+		}
+
+		loadMaterialsAction->setData(QVariant(proxyModel->mapToSource(index)));
+		contextMenu->exec(view->viewport()->mapToGlobal(point));
+	});
 
 	layout()->addWidget(view);
 #if 0

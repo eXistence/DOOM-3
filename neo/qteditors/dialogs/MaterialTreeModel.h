@@ -6,8 +6,8 @@ enum class MaterialColumns { Name, Location, COUNT };
 
 class fhMaterialTreeModelItem {
 public:
-	explicit fhMaterialTreeModelItem(const QString &displayName, const QString &location)
-		: name(displayName), location(location) {}
+	explicit fhMaterialTreeModelItem(const QString& name, const QString &displayName, const QString &location)
+		: displayName(displayName), name(name), location(location) {}
 
 	void addChild(fhMaterialTreeModelItem *child) {
 		if (child->parent) {
@@ -29,7 +29,7 @@ public:
 
 	QVariant data(int column) const {
 		if (column == static_cast<int>(MaterialColumns::Name)) {
-			return QVariant(name);
+			return QVariant(displayName);
 		}
 
 		if (column == static_cast<int>(MaterialColumns::Location)) {
@@ -49,16 +49,19 @@ public:
 
 	fhMaterialTreeModelItem *parentItem() { return parent; }
 
-	fhMaterialTreeModelItem *findItemByName(const QString &name) {
+	fhMaterialTreeModelItem *findItemByName(const QString &displayName) {
 		for (auto c : childs) {
-			if (c->name == name) {
+			if (c->displayName == displayName) {
 				return c;
 			}
 		}
 		return nullptr;
 	}
 
+	const QString& getName() const { return name; }
+
 private:
+	QString displayName;
 	QString name;
 	QString location;
 	fhMaterialTreeModelItem *parent = nullptr;
@@ -80,8 +83,9 @@ public:
 	int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 	int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
-private:
+	QVector<QString> getChildMaterials(const QModelIndex &parent) const;
 
+private:
 	void insertNewMaterial(fhMaterialTreeModelItem *parent, fhMaterialTreeModelItem *item);
 
 	fhMaterialTreeModelItem *rootItem;

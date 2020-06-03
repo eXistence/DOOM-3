@@ -1,23 +1,24 @@
 #include "MaterialTreeModel.h"
 
 fhMaterialTreeModel::fhMaterialTreeModel(QObject *parent) : QAbstractItemModel(parent) {
-	rootItem = new fhMaterialTreeModelItem("name", "file");
+	rootItem = new fhMaterialTreeModelItem("name", "name", "file");
 
 	int num = declManager->GetNumDecls(DECL_MATERIAL);
-	for (int i = 0; i < num; ++i) {
-		
-		auto decl = declManager->DeclByIndex(DECL_MATERIAL, i, false);
+	for (int i = 0; i < num; ++i) {		
+		auto decl = declManager->DeclByIndex(DECL_MATERIAL, i, false);		
+
 		QString name = decl->GetName();
+		
 		QString location = QString("%1:%2").arg(decl->GetFileName()).arg(decl->GetLineNum());
 		auto path = name.split("/", QString::SkipEmptyParts);
 		auto parent = rootItem;
 		for (int i = 0; i < path.size(); ++i) {
 			if (i == path.size() - 1) {
-				parent->addChild(new fhMaterialTreeModelItem(path[i], location));		
+				parent->addChild(new fhMaterialTreeModelItem(name, path[i], location));		
 			} else {
 				auto newParent = parent->findItemByName(path[i]);
 				if (!newParent) {
-					newParent = new fhMaterialTreeModelItem(path[i], "");
+					newParent = new fhMaterialTreeModelItem("", path[i], "");
 					parent->addChild(newParent);					
 				}
 				parent = newParent;
@@ -98,7 +99,7 @@ int fhMaterialTreeModel::rowCount(const QModelIndex &parent) const {
 		parentItem = rootItem;
 	else
 		parentItem = static_cast<fhMaterialTreeModelItem *>(parent.internalPointer());
-
+	 
 	return parentItem->childCount();
 }
 
@@ -106,4 +107,27 @@ int fhMaterialTreeModel::columnCount(const QModelIndex &parent) const {
 	if (parent.isValid())
 		return static_cast<fhMaterialTreeModelItem *>(parent.internalPointer())->columnCount();
 	return rootItem->columnCount();
+}
+
+
+QVector<QString> fhMaterialTreeModel::getChildMaterials(const QModelIndex &parent) const {
+	if (!parent.isValid())
+		return {};
+
+	QVector<QString> materials;
+	auto item = static_cast<fhMaterialTreeModelItem *>(parent.internalPointer());
+	if (!item->getName().isEmpty()) {
+		materials.append(item->getName());
+	} else {
+		for (int i = 0; i < item->childCount(); ++i) {
+			auto child = item->child(i);			
+
+			auto material = item->child(i)->getName();
+			if (!material.isEmpty()) {
+				materials.append(material);
+			}
+		}
+	}
+
+	return materials;
 }
