@@ -58,7 +58,7 @@ add_definitions(-DGLEW_STATIC -D__DOOM__ -D__DOOM_DLL__)
 add_library(${TARGET_NAME} STATIC ${SOURCES})
 add_dependencies(${TARGET_NAME} fhGame-x86)
 target_link_libraries(${TARGET_NAME} qtadvanceddocking)
-qt5_use_modules(${TARGET_NAME} Widgets)
+qt5_use_modules(${TARGET_NAME} Widgets Svg Xml)
 
 if(MSVC)
   set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER libs)

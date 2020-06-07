@@ -43,6 +43,7 @@ LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
 #include <QTimer>
 #include <QToolBar>
 #include <QtPlatformHeaders/QWGLNativeContext>
+#include <QStatusBar>
 
 void Drag_Begin(int x, int y, int buttons, const idVec3 &xaxis, const idVec3 &yaxis, const idVec3 &origin,
 				const idVec3 &dir);
@@ -296,6 +297,11 @@ fhRenderWidget::fhRenderWidget(QWidget *parent) : QWidget(parent), m_drawable(nu
 	this->setLayout(layout);
 	layout->setMargin(0);
 	layout->setSpacing(0);
+
+	QToolBar *toolbar = new QToolBar(this);
+	QAction *foo = new QAction("Foo", this);
+	toolbar->addAction(foo);
+	layout->addWidget(toolbar);
 
 	m_window = new fhLegacyRenderWindow(&m_drawable, &m_camera);
 	layout->addWidget(m_window->createContainingWidget(this));

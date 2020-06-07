@@ -201,7 +201,8 @@ else()
 endif()
 
 set(CMAKE_AUTOMOC ON)
-find_package(Qt5Widgets)
+#find_package(Qt5Widgets)
+find_package(Qt5 COMPONENTS Core Widgets Xml Svg REQUIRED)
 if(Qt5Widgets_FOUND)
   add_definitions(-DID_ALLOW_QT)
   add_subdirectory(ads)
@@ -210,35 +211,51 @@ if(Qt5Widgets_FOUND)
   get_target_property(QtCore_location Qt5::Core LOCATION)
   get_target_property(QtWidgets_location Qt5::Widgets LOCATION)
   get_target_property(QtGui_location Qt5::Gui LOCATION)
+  get_target_property(QtXml_location Qt5::Xml LOCATION)
+  get_target_property(QtSvg_location Qt5::Svg LOCATION)
 
   SET(QTDLLS
     ${QtCore_location}
     ${QtWidgets_location}
     ${QtGui_location}
+	${QtXml_location}
+	${QtSvg_location}
   )
 
 
   add_custom_target(Qt5CopyBinaries
       COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/Debug"
       COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/Debug/platforms"
+	  COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/Debug/imageformats"
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Cored.dll  ${CMAKE_BINARY_DIR}/bin/Debug/
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Guid.dll  ${CMAKE_BINARY_DIR}/bin/Debug/
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Widgetsd.dll  ${CMAKE_BINARY_DIR}/bin/Debug/
+	  COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Xmld.dll  ${CMAKE_BINARY_DIR}/bin/Debug/
+	  COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Svgd.dll  ${CMAKE_BINARY_DIR}/bin/Debug/
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../plugins/platforms/qwindowsd.dll  ${CMAKE_BINARY_DIR}/bin/Debug/platforms/
+	  COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../plugins/imageformats/qsvgd.dll  ${CMAKE_BINARY_DIR}/bin/Debug/imageformats/
 
       COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/Release"
       COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/Release/platforms"
+	  COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/Release/imageformats"
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Core.dll  ${CMAKE_BINARY_DIR}/bin/Release/
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Gui.dll  ${CMAKE_BINARY_DIR}/bin/Release/
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Widgets.dll  ${CMAKE_BINARY_DIR}/bin/Release/
+	  COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Xml.dll  ${CMAKE_BINARY_DIR}/bin/Release/
+	  COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Svg.dll  ${CMAKE_BINARY_DIR}/bin/Release/
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../plugins/platforms/qwindows.dll  ${CMAKE_BINARY_DIR}/bin/Release/platforms/
+	  COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../plugins/imageformats/qsvg.dll  ${CMAKE_BINARY_DIR}/bin/Release/imageformats/
 
       COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/RelWithDebInfo"
       COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/platforms"
+	  COMMAND ${CMAKE_COMMAND} -E make_directory   "${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/imageformats"
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Core.dll  ${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Gui.dll  ${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Widgets.dll  ${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/
+	  COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Xml.dll  ${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/
+	  COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../bin/Qt5Svg.dll  ${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/
       COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../plugins/platforms/qwindows.dll  ${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/platforms/
+	  COMMAND ${CMAKE_COMMAND} -E copy ${Qt5Core_DIR}/../../../plugins/imageformats/qsvg.dll  ${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/imageformats/
   )
 
 

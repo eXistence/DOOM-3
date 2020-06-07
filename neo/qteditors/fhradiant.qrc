@@ -1,5 +1,12 @@
 <RCC>
     <qresource prefix="/">
         <file>darkorange.css</file>
+        <file>fontawesome.json</file>
+        <file>mirror-x.svg</file>
+        <file>rotate-x.svg</file>
+        <file>mirror-y.svg</file>
+        <file>rotate-y.svg</file>
+        <file>mirror-z.svg</file>
+        <file>rotate-z.svg</file>
     </qresource>
 </RCC>

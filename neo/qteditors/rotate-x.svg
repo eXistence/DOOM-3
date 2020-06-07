@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="svg8"
+   version="1.1"
+   viewBox="0 0 162.85118 162.85118"
+   height="162.85118mm"
+   width="162.85118mm">
+  <defs
+     id="defs2" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-38.392858,-60.226194)"
+     id="layer1">
+    <g
+       id="text4587"
+       style="font-style:normal;font-weight:normal;font-size:117.020401px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:2.92551017"
+       aria-label="X"
+       transform="translate(89.7248,-324.3418)">
+      <path
+         id="path4994"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:2.92551017"
+         d="m -40.467846,442.49123 h 12.399134 L -6.8701923,474.2033 14.442605,442.49123 H 26.84174 L -0.58491681,483.4598 28.670183,527.79956 H 16.271049 L -7.7272753,491.51638 -31.897016,527.79956 h -12.456273 l 30.455016,-45.53968 z" />
+    </g>
+    <path
+       id="path4812-5"
+       d="m 157.02797,137.40858 c -0.55888,-9.602 -4.65866,-18.49035 -11.63195,-25.14194 -12.54957,-11.97076 -31.54278,-13.66727 -45.86207,-4.52786 -1.04238,0.66533 -2.39828,0.54285 -3.29334,-0.31243 l -9.27636,-8.86409 c -1.2138,-1.15986 -1.089,-3.1493 0.26885,-4.13457 21.1738,-15.36129 50.8731,-13.9095 70.49119,4.83669 10.7568,10.27873 16.50568,23.8686 17.16951,37.68385 l 11.27447,-0.2905 c 4.77275,-0.12298 7.31073,5.61936 4.02227,9.10083 l -20.6177,21.82778 c -2.03857,2.15822 -5.43054,2.24561 -7.5763,0.19522 l -21.70186,-20.73734 c -3.46138,-3.30755 -1.21905,-9.17306 3.55385,-9.29622 z"
+       style="fill:currentColor;stroke-width:0.22393864" />
+  </g>
+</svg>

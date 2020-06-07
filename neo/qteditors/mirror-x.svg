@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="svg8"
+   version="1.1"
+   viewBox="0 0 162.85118 162.85118"
+   height="162.85118mm"
+   width="162.85118mm">
+  <defs
+     id="defs2" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-38.392858,-60.226194)"
+     id="layer1">
+    <g
+       id="text4587-6"
+       style="font-style:normal;font-weight:normal;font-size:78.47743225px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.961936"
+       aria-label="X"
+       transform="translate(-311.81438,-635.92655)">
+      <path
+         id="path4979"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:1.961936"
+         d="m 396.86745,777.31583 19.84928,29.19912 h -15.36595 l -13.37335,-19.54272 -13.25839,19.54272 h -15.44258 l 19.84927,-29.19912 -19.08289,-28.01123 h 15.40426 l 12.53033,18.43147 12.49201,-18.43147 h 15.4809 z" />
+    </g>
+    <g
+       id="text4587-6-5"
+       style="font-style:normal;font-weight:normal;font-size:78.47743225px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.961936"
+       aria-label="X"
+       transform="translate(-311.81438,-635.92655)">
+      <path
+         id="path4976"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:1.961936"
+         d="m 486.08636,778.6876 19.84927,29.19912 H 490.56969 L 477.19633,788.344 463.93794,807.88672 H 448.49536 L 468.34463,778.6876 449.26174,750.67636 H 464.666 l 12.53033,18.43147 12.49202,-18.43147 h 15.4809 z" />
+    </g>
+    <path
+       id="rect4671"
+       d="m 116.01995,82.45143 h 9.87623 v 117.96618 h -9.87623 z"
+       style="fill:#000000;stroke-width:1.13012612;stroke-linecap:square;stroke-miterlimit:3.20000005;stroke-dasharray:none" />
+  </g>
+</svg>
