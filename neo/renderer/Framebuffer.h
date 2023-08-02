@@ -49,6 +49,10 @@ public:
 	}
 	void Resize(int width, int height, int samples, pixelFormat_t colorFormat, pixelFormat_t depthFormat);
 
+	int GetID() { // JW : for clearing framebuffer effects
+		return num; 
+	}
+
 	idImage* GetColorAttachment() {
 		return colorAttachment;
 	}

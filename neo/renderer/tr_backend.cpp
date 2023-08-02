@@ -925,6 +925,16 @@ static void	RB_CopyRender( const void *data, bool copyFromDefaultFramebuffer ) {
 		fhFramebuffer framebuffer("tmp", cmd->imageWidth, cmd->imageHeight, image, nullptr );
 		fhFramebuffer::BlitColor( src, cmd->x, cmd->y, cmd->imageWidth, cmd->imageHeight, &framebuffer );
 		framebuffer.Purge();
+		if ( image == fhFramebuffer::currentRenderFramebuffer->GetColorAttachment() ) // JW : need to do below to clear the mirror hell effect in Mars City 2 so it doesn't leave artifacts in subsequent uses of reflection, imp fireball heat distortion etc.
+		{
+			fhFramebuffer *currentDrawBuffer = fhFramebuffer::GetCurrentDrawBuffer();
+			fhFramebuffer::currentRenderFramebuffer->Bind();
+			glBindFramebuffer( GL_DRAW_FRAMEBUFFER, fhFramebuffer::currentRenderFramebuffer->GetID() );
+			int  samples = fhFramebuffer::currentRenderFramebuffer->GetSamples();
+			auto target = samples > 1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
+			glFramebufferTexture2D( GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, fhFramebuffer::currentRenderFramebuffer->GetColorAttachment()->texnum, 0 ); // just reattaching it why
+			currentDrawBuffer->Bind();
+		}
 	}
 }
 
